@@ -1,39 +1,39 @@
 # X One Click Block
 
-一个独立实现的 Chrome Manifest V3 扩展：在 X（Twitter）的推文、用户列表和个人主页旁加入一键 Block 或静音按钮，并提供批量队列、本地账本、统计与备份。
+An independently implemented Chrome Manifest V3 extension that adds one-click Block and Mute buttons to posts, user lists, and profiles on X (Twitter), with bulk queues, local action ledgers, statistics, and backups.
 
-## 当前功能
+## Features
 
-- 在时间线、搜索、粉丝/关注列表、通知、话题、社群、互动列表和个人主页注入一键按钮
-- 可选择默认执行“Block”或“静音”
-- 自动驱动 X 官方菜单和确认框，不调用非公开 API
-- 从文本、X 链接、CSV 或 JSON 导入批量账号
-- 后台逐个打开个人主页处理队列；支持停止、重试失败项和运行历史
-- 按当前登录的 `@handle` 分开保存 Block/静音账本
-- 搜索账本、导出完整 JSON 备份、选择性恢复和清理本地数据
-- 数据仅保存在 `chrome.storage.local`
+- Injects one-click buttons into timelines, search results, follower/following lists, notifications, hashtags, communities, engagement lists, and profiles
+- Lets you choose Block or Mute as the default action
+- Drives X's official menus and confirmation dialogs without calling private APIs
+- Imports bulk account lists from text, X links, CSV, or JSON
+- Processes queued accounts through background profile tabs, with stop, retry, and run-history support
+- Stores separate Block and Mute ledgers for each detected X `@handle`
+- Supports ledger search, full JSON exports, selective restore, and local data cleanup
+- Stores all extension data in `chrome.storage.local`
 
-## 本地安装
+## Local Installation
 
-1. 打开 `chrome://extensions`
-2. 开启右上角“开发者模式”
-3. 点击“加载已解压的扩展程序”
-4. 选择本仓库目录
-5. 打开或刷新 [X](https://x.com)
+1. Open `chrome://extensions`.
+2. Enable **Developer mode** in the top-right corner.
+3. Click **Load unpacked**.
+4. Select this repository's directory.
+5. Open or refresh [X](https://x.com).
 
-首次使用批量队列前，请确认浏览器已经登录 X。队列会创建不激活的临时标签页，完成每个账号后自动关闭。
+Before using the bulk queue, make sure you are signed in to X. The queue creates inactive temporary tabs and closes each one after processing the account.
 
-## 开发与验证
+## Development and Validation
 
-项目不需要构建步骤，浏览器直接加载仓库即可。
+No build step is required; Chrome can load the repository directly.
 
 ```bash
 node --test
 find src -name '*.js' -exec node --check {} \;
 ```
 
-## 实现说明
+## Implementation Notes
 
-X 是持续变化的单页应用。扩展优先使用相对稳定的 `data-testid` 和 URL 结构识别页面元素，通过 `MutationObserver` 适配无限滚动和站内跳转。真正的 Block/静音仍由 X 自己的界面执行，因此操作结果、频率限制和账号权限以 X 为准。
+X is a continuously changing single-page application. The extension prefers relatively stable `data-testid` attributes and URL structures to identify page elements, and uses `MutationObserver` to support infinite scrolling and in-app navigation. Block and Mute actions are still performed by X's own interface, so results, rate limits, and account permissions are determined by X.
 
-此项目独立实现公开描述的产品行为，不包含第三方扩展的源码、名称、图标或其他品牌素材。
+This project independently implements publicly described product behavior. It does not contain third-party extension source code, names, icons, or other branded assets.
