@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>X One Click Block 控制中心</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">X</span>
+        <div><strong>One Click Block</strong><small>控制中心</small></div>
+      </div>
+      <nav aria-label="控制中心导航">
+        <button class="nav-item active" data-view="overview">概览</button>
+        <button class="nav-item" data-view="queue">批量队列 <span id="queue-badge"></span></button>
+        <button class="nav-item" data-view="ledger">操作账本</button>
+        <button class="nav-item" data-view="settings">设置</button>
+        <button class="nav-item" data-view="backup">备份与恢复</button>
+      </nav>
+      <p class="local-note">所有数据仅保存在本机浏览器中。</p>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">当前 X 身份</p>
+          <select id="viewer-select" aria-label="当前 X 身份"></select>
+        </div>
+        <a class="open-x" href="https://x.com/home" target="_blank" rel="noreferrer">打开 X ↗</a>
+      </header>
+
+      <section class="view active" id="view-overview">
+        <div class="heading">
+          <div><p class="eyebrow">Dashboard</p><h1>操作概览</h1></div>
+          <p>一键操作与批量任务的本地统计。</p>
+        </div>
+        <div class="stat-grid">
+          <article class="stat-card danger"><span>已拉黑</span><strong id="stat-blocked">0</strong><small>个账号</small></article>
+          <article class="stat-card purple"><span>已静音</span><strong id="stat-muted">0</strong><small>个账号</small></article>
+          <article class="stat-card blue"><span>队列完成</span><strong id="stat-done">0</strong><small>项任务</small></article>
+          <article class="stat-card neutral"><span>等待处理</span><strong id="stat-pending">0</strong><small>项任务</small></article>
+        </div>
+        <article class="panel">
+          <div class="panel-title"><div><h2>最近批次</h2><p>最多保留 100 次运行记录</p></div></div>
+          <div id="runs-list" class="list empty">还没有批量运行记录。</div>
+        </article>
+      </section>
+
+      <section class="view" id="view-queue">
+        <div class="heading">
+          <div><p class="eyebrow">Automation</p><h1>批量队列</h1></div>
+          <p>粘贴 @handle、X 链接，或导入 CSV / JSON。</p>
+        </div>
+        <article class="panel composer">
+          <label for="handles-input">账号列表</label>
+          <textarea id="handles-input" rows="7" placeholder="@jack&#10;https://x.com/someone&#10;another_user"></textarea>
+          <div class="composer-actions">
+            <label class="file-button">导入 CSV / JSON<input id="queue-file" type="file" accept=".csv,.json,.txt"></label>
+            <select id="queue-action" aria-label="批量操作">
+              <option value="block">拉黑</option>
+              <option value="mute">静音</option>
+            </select>
+            <button class="button primary" id="add-queue">加入队列</button>
+          </div>
+          <p id="parse-preview" class="hint">输入后会自动去重并校验用户名。</p>
+        </article>
+        <article class="panel">
+          <div class="panel-title">
+            <div><h2>待处理账号</h2><p id="queue-summary">0 项</p></div>
+            <div class="button-row">
+              <button class="button ghost" id="clear-completed">清除已完成</button>
+              <button class="button danger-button" id="stop-queue">停止</button>
+              <button class="button primary" id="start-queue">开始处理</button>
+            </div>
+          </div>
+          <div id="queue-list" class="list empty">队列为空。</div>
+        </article>
+      </section>
+
+      <section class="view" id="view-ledger">
+        <div class="heading">
+          <div><p class="eyebrow">Local ledger</p><h1>操作账本</h1></div>
+          <p>这里只记录通过本扩展成功执行的操作。</p>
+        </div>
+        <article class="panel">
+          <div class="ledger-tools">
+            <div class="segmented" role="group" aria-label="账本类型">
+              <button class="active" data-ledger="blocked">已拉黑</button>
+              <button data-ledger="muted">已静音</button>
+            </div>
+            <input id="ledger-search" type="search" placeholder="搜索 @handle">
+          </div>
+          <div id="ledger-list" class="list empty">还没有记录。</div>
+        </article>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="heading">
+          <div><p class="eyebrow">Preferences</p><h1>设置</h1></div>
+          <p>选择默认动作，以及按钮在哪些页面出现。</p>
+        </div>
+        <article class="panel settings-panel">
+          <div class="field-row">
+            <div><label for="default-action">默认一键操作</label><p>页面按钮会直接执行所选动作。</p></div>
+            <select id="default-action"><option value="block">拉黑</option><option value="mute">静音</option></select>
+          </div>
+          <div class="field-row">
+            <div><label for="queue-delay">队列间隔</label><p>保守一点可以降低 X 临时限制操作的概率。</p></div>
+            <select id="queue-delay">
+              <option value="1000">1 秒</option><option value="1800">1.8 秒</option>
+              <option value="3000">3 秒</option><option value="5000">5 秒</option>
+              <option value="10000">10 秒</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div><label for="show-shortcut">页面快捷入口</label><p>在 X 右下角显示控制中心按钮。</p></div>
+            <label class="switch"><input id="show-shortcut" type="checkbox"><span></span></label>
+          </div>
+          <div class="placement-section">
+            <h2>显示位置</h2>
+            <div id="placement-grid" class="placement-grid"></div>
+          </div>
+          <div class="save-row"><span id="settings-status"></span><button id="save-settings" class="button primary">保存设置</button></div>
+        </article>
+      </section>
+
+      <section class="view" id="view-backup">
+        <div class="heading">
+          <div><p class="eyebrow">Your data</p><h1>备份与恢复</h1></div>
+          <p>导出账本与设置，或选择性恢复已有备份。</p>
+        </div>
+        <div class="backup-grid">
+          <article class="panel">
+            <h2>导出完整备份</h2><p>包含所有身份的拉黑、静音账本，设置、队列和运行历史。</p>
+            <button id="export-data" class="button primary">下载 JSON 备份</button>
+          </article>
+          <article class="panel">
+            <h2>恢复备份</h2><p>同名账号会合并，并保留时间更新的记录。</p>
+            <label class="file-button wide">选择备份文件<input id="restore-file" type="file" accept=".json"></label>
+            <div class="check-row">
+              <label><input id="import-blocks" type="checkbox" checked> 拉黑账本</label>
+              <label><input id="import-mutes" type="checkbox" checked> 静音账本</label>
+              <label><input id="import-settings" type="checkbox" checked> 设置</label>
+            </div>
+            <button id="restore-data" class="button primary" disabled>开始恢复</button>
+          </article>
+        </div>
+        <article class="panel danger-zone">
+          <h2>清理本地数据</h2><p>不会在 X 上取消拉黑或静音，只清除扩展自己的记录。</p>
+          <div class="button-row">
+            <button class="button danger-button" data-clear="blocked">清除拉黑账本</button>
+            <button class="button danger-button" data-clear="muted">清除静音账本</button>
+            <button class="button danger-button" data-clear="settings">重置设置</button>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="../shared/core.js"></script>
+  <script src="../shared/storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

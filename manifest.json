@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "X One Click Block",
+  "description": "Block or mute accounts on X with one click, including bulk queues and a local action ledger.",
+  "version": "0.1.0",
+  "permissions": [
+    "alarms",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_title": "X One Click Block",
+    "default_popup": "src/popup/popup.html"
+  },
+  "options_page": "src/options/options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "css": [
+        "src/content/content.css"
+      ],
+      "js": [
+        "src/shared/core.js",
+        "src/shared/storage.js",
+        "src/content/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

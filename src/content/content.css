@@ -1,0 +1,111 @@
+.xb-one-click {
+  --xb-accent: rgb(244, 33, 46);
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 9999px;
+  color: rgb(113, 118, 123);
+  cursor: pointer;
+  display: inline-flex;
+  font: 700 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  gap: 5px;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0 8px;
+  transition: background-color .15s, color .15s, opacity .15s;
+}
+
+.xb-one-click:hover {
+  background: color-mix(in srgb, var(--xb-accent) 10%, transparent);
+  color: var(--xb-accent);
+}
+
+.xb-one-click[data-action="mute"] {
+  --xb-accent: rgb(120, 86, 255);
+}
+
+.xb-one-click:disabled {
+  cursor: progress;
+  opacity: .55;
+}
+
+.xb-one-click svg {
+  fill: currentColor;
+  height: 18px;
+  width: 18px;
+}
+
+.xb-one-click--cell {
+  flex: 0 0 auto;
+  margin-left: 6px;
+}
+
+.xb-one-click--tweet {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0;
+  width: 34px;
+}
+
+.xb-one-click--tweet span {
+  display: none;
+}
+
+.xb-one-click--profile {
+  border: 1px solid rgb(207, 217, 222);
+  color: rgb(15, 20, 25);
+  margin-right: 8px;
+}
+
+.xb-settings-shortcut {
+  align-items: center;
+  background: rgb(15, 20, 25);
+  border: 0;
+  border-radius: 9999px;
+  bottom: 22px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .22);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  position: fixed;
+  right: 22px;
+  width: 42px;
+  z-index: 9999;
+}
+
+.xb-settings-shortcut svg {
+  fill: currentColor;
+  height: 21px;
+  width: 21px;
+}
+
+.xb-toast {
+  background: rgb(29, 155, 240);
+  border-radius: 6px;
+  bottom: 26px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, .25);
+  color: white;
+  font: 600 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  left: 50%;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 12px 18px;
+  position: fixed;
+  text-align: center;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+}
+
+@media (prefers-color-scheme: dark) {
+  .xb-one-click--profile {
+    border-color: rgb(83, 100, 113);
+    color: rgb(231, 233, 234);
+  }
+
+  .xb-settings-shortcut {
+    background: rgb(239, 243, 244);
+    color: rgb(15, 20, 25);
+  }
+}
