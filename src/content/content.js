@@ -57,7 +57,7 @@
   }
 
   function actionLabel(action) {
-    return action === "mute" ? "静音" : "拉黑";
+    return action === "mute" ? "Mute" : "Block";
   }
 
   function createButton(handle, kind) {
@@ -68,7 +68,7 @@
     button.dataset.action = action;
     button.dataset.handle = handle;
     button.innerHTML = `${ICONS[action]}<span>${actionLabel(action)}</span>`;
-    button.title = `一键${actionLabel(action)} @${handle}`;
+    button.title = `${actionLabel(action)} @${handle}`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", onActionClick, true);
     return button;
@@ -92,18 +92,18 @@
       button.remove();
     } catch (error) {
       button.disabled = false;
-      showToast(`操作失败：${error.message}`, true);
+      showToast(`Action failed: ${error.message}`, true);
     }
   }
 
   async function performOfficialAction(root, action, handle) {
     const viewer = detectViewer();
-    if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error("不能对自己的账号执行此操作");
+    if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error("You cannot perform this action on your own account");
 
     const menuButton = root.querySelector('button[data-testid="caret"]') ||
       root.querySelector('[data-testid="userActions"]') ||
-      root.querySelector('button[aria-label*="More"], button[aria-label*="更多"]');
-    if (!menuButton) throw new Error("没有找到账号操作菜单");
+      root.querySelector('button[aria-label*="More"]');
+    if (!menuButton) throw new Error("Account action menu not found");
     menuButton.click();
 
     const alreadySelector = action === "mute" ? '[data-testid="unmute"]' : '[data-testid="unblock"]';
@@ -114,7 +114,7 @@
       return { alreadyDone: true };
     }
     const item = document.querySelector(actionSelector);
-    if (!item) throw new Error(`菜单中没有${actionLabel(action)}选项`);
+    if (!item) throw new Error(`${actionLabel(action)} is not available in the account menu`);
     item.click();
 
     if (action === "block") {
@@ -146,7 +146,9 @@
       cell.dataset[MARKER] = "1";
       const followButton = cell.querySelector('[data-testid$="-follow"], [data-testid$="-unfollow"]');
       const target = followButton?.parentElement || cell.firstElementChild || cell;
-      target.append(createButton(handle, "cell"));
+      const button = createButton(handle, "cell");
+      target.append(button);
+      if (followButton) matchButtonSize(button, followButton, true);
     }
   }
 
@@ -155,9 +157,48 @@
     const handle = profileHandle();
     const viewer = detectViewer();
     if (!handle || handle === viewer) return;
-    const actions = document.querySelector('[data-testid="userActions"]')?.parentElement;
-    if (!actions) return;
-    actions.prepend(createButton(handle, "profile"));
+    const menuButton = document.querySelector('[data-testid="userActions"]');
+    if (!menuButton) return;
+
+    const followSelector = '[data-testid$="-follow"], [data-testid$="-unfollow"]';
+    let actions = menuButton.parentElement;
+    let followButton = null;
+    while (actions && actions !== document.body) {
+      followButton = actions.querySelector(followSelector);
+      if (followButton) break;
+      actions = actions.parentElement;
+    }
+    if (!actions || !followButton) return;
+
+    let followWrapper = followButton;
+    while (followWrapper.parentElement && followWrapper.parentElement !== actions) {
+      followWrapper = followWrapper.parentElement;
+    }
+    const button = createButton(handle, "profile");
+    actions.insertBefore(button, followWrapper);
+    matchButtonSize(button, followButton);
+  }
+
+  function matchButtonSize(button, reference, matchWidth = false) {
+    const sync = () => {
+      if (!button.isConnected || !reference.isConnected) return;
+      const { height, width } = reference.getBoundingClientRect();
+      if (height <= 0) return;
+      button.style.height = `${height}px`;
+      button.style.minHeight = `${height}px`;
+      if (matchWidth && width > 0) {
+        button.style.width = `${width}px`;
+        button.style.minWidth = `${width}px`;
+      }
+    };
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(reference);
+    new MutationObserver((mutations, mutationObserver) => {
+      if (button.isConnected && reference.isConnected) return;
+      observer.disconnect();
+      mutationObserver.disconnect();
+    }).observe(document.body, { childList: true, subtree: true });
   }
 
   function updateShortcut() {
@@ -170,7 +211,7 @@
     shortcut = document.createElement("button");
     shortcut.type = "button";
     shortcut.className = "xb-settings-shortcut";
-    shortcut.title = "打开 X One Click Block 控制中心";
+    shortcut.title = "Open X One Click Block Control Center";
     shortcut.setAttribute("aria-label", shortcut.title);
     shortcut.innerHTML = ICONS.settings;
     shortcut.addEventListener("click", () => chrome.runtime.sendMessage({ type: "OPEN_OPTIONS" }));
@@ -213,7 +254,7 @@
     if (message?.type !== "PROCESS_PROFILE_ACTION") return undefined;
     (async () => {
       const handle = Core.normalizeHandle(message.handle);
-      if (!handle || profileHandle() !== handle) throw new Error("打开的用户页与队列目标不一致");
+      if (!handle || profileHandle() !== handle) throw new Error("The opened profile does not match the queued account");
       const result = await performOfficialAction(document, message.action, handle);
       await chrome.runtime.sendMessage({
         type: "RECORD_ACTION",

@@ -38,7 +38,7 @@
 
 .xb-one-click--cell {
   flex: 0 0 auto;
-  margin-left: 6px;
+  margin-top: 8px;
 }
 
 .xb-one-click--tweet {
@@ -53,8 +53,10 @@
 }
 
 .xb-one-click--profile {
+  align-self: flex-start;
   border: 1px solid rgb(207, 217, 222);
   color: rgb(15, 20, 25);
+  flex: 0 0 auto;
   margin-right: 8px;
 }
 

@@ -9,12 +9,12 @@
   let toastTimer;
 
   const placementLabels = {
-    timeline: "时间线", followers: "粉丝列表", following: "正在关注",
-    search: "搜索结果", communities: "社群", engagements: "转推 / 点赞列表",
-    replies: "回复页", trending: "趋势", notifications: "通知",
-    hashtags: "话题标签", profiles: "个人主页", explore: "探索"
+    timeline: "Timeline", followers: "Followers", following: "Following",
+    search: "Search Results", communities: "Communities", engagements: "Reposts / Likes",
+    replies: "Replies", trending: "Trending", notifications: "Notifications",
+    hashtags: "Hashtags", profiles: "Profiles", explore: "Explore"
   };
-  const statusLabels = { pending: "等待", active: "处理中", done: "完成", error: "失败" };
+  const statusLabels = { pending: "Pending", active: "Processing", done: "Done", error: "Failed" };
 
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -24,7 +24,7 @@
 
   async function message(type, payload) {
     const response = await chrome.runtime.sendMessage({ type, ...(payload || {}) });
-    if (!response?.ok) throw new Error(response?.error || "操作失败");
+    if (!response?.ok) throw new Error(response?.error || "Action failed");
     return response.result;
   }
 
@@ -46,7 +46,7 @@
     const viewers = Object.keys(state.accounts);
     if (!viewers.includes(state.currentViewer)) viewers.unshift(state.currentViewer);
     select.innerHTML = viewers.map((viewer) =>
-      `<option value="${escapeHtml(viewer)}"${viewer === state.currentViewer ? " selected" : ""}>${viewer === "default" ? "未识别身份" : `@${escapeHtml(viewer)}`}</option>`
+      `<option value="${escapeHtml(viewer)}"${viewer === state.currentViewer ? " selected" : ""}>${viewer === "default" ? "Account not detected" : `@${escapeHtml(viewer)}`}</option>`
     ).join("");
   }
 
@@ -62,16 +62,16 @@
     const container = $("#runs-list");
     if (!state.runs.length) {
       container.className = "list empty";
-      container.textContent = "还没有批量运行记录。";
+      container.textContent = "No bulk runs yet.";
       return;
     }
     container.className = "list";
     container.innerHTML = state.runs.slice(0, 20).map((run) => `
       <div class="list-row">
-        <div><div class="handle">${formatDate(run.startedAt)}</div><div class="meta">${run.status === "running" ? "正在运行" : run.status === "stopped" ? "已停止" : "已完成"}</div></div>
-        <span class="status done">成功 ${Number(run.succeeded) || 0}</span>
-        <span class="status${run.failed ? " error" : " pending"}">失败 ${Number(run.failed) || 0}</span>
-        <span class="meta">${run.finishedAt ? duration(run.startedAt, run.finishedAt) : "进行中"}</span>
+        <div><div class="handle">${formatDate(run.startedAt)}</div><div class="meta">${run.status === "running" ? "Running" : run.status === "stopped" ? "Stopped" : "Completed"}</div></div>
+        <span class="status done">Succeeded ${Number(run.succeeded) || 0}</span>
+        <span class="status${run.failed ? " error" : " pending"}">Failed ${Number(run.failed) || 0}</span>
+        <span class="meta">${run.finishedAt ? duration(run.startedAt, run.finishedAt) : "In progress"}</span>
       </div>`).join("");
   }
 
@@ -79,22 +79,22 @@
     const items = state.queue.items;
     const pending = items.filter((item) => item.status === "pending" || item.status === "active").length;
     $("#queue-badge").textContent = pending || "";
-    $("#queue-summary").textContent = `${items.length} 项 · ${pending} 项待处理`;
+    $("#queue-summary").textContent = `${items.length} items · ${pending} pending`;
     $("#start-queue").disabled = state.queue.running || !items.some((item) => item.status === "pending" || item.status === "error");
     $("#stop-queue").disabled = !state.queue.running;
     const container = $("#queue-list");
     if (!items.length) {
       container.className = "list empty";
-      container.textContent = "队列为空。";
+      container.textContent = "The queue is empty.";
       return;
     }
     container.className = "list";
     container.innerHTML = [...items].reverse().map((item) => `
       <div class="list-row" title="${escapeHtml(item.error || "")}">
-        <div><div class="handle">@${escapeHtml(item.handle)}</div><div class="meta">${item.action === "mute" ? "静音" : "拉黑"}</div></div>
+        <div><div class="handle">@${escapeHtml(item.handle)}</div><div class="meta">${item.action === "mute" ? "Mute" : "Block"}</div></div>
         <span class="status ${escapeHtml(item.status)}">${statusLabels[item.status] || item.status}</span>
         <span class="meta">${formatDate(item.createdAt)}</span>
-        <span class="meta">${item.error ? escapeHtml(item.error) : item.alreadyDone ? "此前已完成" : ""}</span>
+        <span class="meta">${item.error ? escapeHtml(item.error) : item.alreadyDone ? "Already completed" : ""}</span>
       </div>`).join("");
   }
 
@@ -104,14 +104,14 @@
     const container = $("#ledger-list");
     if (!entries.length) {
       container.className = "list empty";
-      container.textContent = query ? "没有匹配的记录。" : "还没有记录。";
+      container.textContent = query ? "No matching records." : "No records yet.";
       return;
     }
     container.className = "list";
     container.innerHTML = entries.map((entry) => `
       <div class="list-row ledger-row">
         <a class="handle" href="https://x.com/${encodeURIComponent(entry.handle)}" target="_blank" rel="noreferrer">@${escapeHtml(entry.handle)}</a>
-        <span class="meta">${entry.source === "queue" ? "批量队列" : "一键操作"}</span>
+        <span class="meta">${entry.source === "queue" ? "Bulk queue" : "One-click action"}</span>
         <span class="meta">${formatDate(entry.timestamp)}</span>
       </div>`).join("");
   }
@@ -133,15 +133,15 @@
 
   function formatDate(timestamp) {
     if (!timestamp) return "—";
-    return new Intl.DateTimeFormat("zh-CN", {
+    return new Intl.DateTimeFormat("en", {
       month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
     }).format(new Date(timestamp));
   }
 
   function duration(start, end) {
     const seconds = Math.max(0, Math.round((end - start) / 1000));
-    if (seconds < 60) return `${seconds} 秒`;
-    return `${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒`;
+    if (seconds < 60) return `${seconds}s`;
+    return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
   }
 
   function toast(text, isError) {
@@ -172,7 +172,7 @@
 
   $("#handles-input").addEventListener("input", () => {
     const count = Core.parseHandles($("#handles-input").value).length;
-    $("#parse-preview").textContent = count ? `识别到 ${count} 个有效账号，重复项会自动移除。` : "输入后会自动去重并校验用户名。";
+    $("#parse-preview").textContent = count ? `${count} valid accounts found. Duplicates will be removed.` : "Handles are validated and deduplicated automatically.";
   });
 
   $("#queue-file").addEventListener("change", async (event) => {
@@ -184,15 +184,15 @@
 
   $("#add-queue").addEventListener("click", () => run(async () => {
     const handles = Core.parseHandles($("#handles-input").value);
-    if (!handles.length) throw new Error("没有识别到有效的 X 用户名");
+    if (!handles.length) throw new Error("No valid X handles found");
     await message("ADD_QUEUE", { handles, action: $("#queue-action").value });
     $("#handles-input").value = "";
     $("#handles-input").dispatchEvent(new Event("input"));
-  }, "已加入批量队列"));
+  }, "Added to the bulk queue"));
 
-  $("#start-queue").addEventListener("click", () => run(() => message("START_QUEUE"), "队列已开始"));
-  $("#stop-queue").addEventListener("click", () => run(() => message("STOP_QUEUE"), "队列已停止"));
-  $("#clear-completed").addEventListener("click", () => run(() => message("CLEAR_QUEUE", { status: "done" }), "已清除完成项"));
+  $("#start-queue").addEventListener("click", () => run(() => message("START_QUEUE"), "Queue started"));
+  $("#stop-queue").addEventListener("click", () => run(() => message("STOP_QUEUE"), "Queue stopped"));
+  $("#clear-completed").addEventListener("click", () => run(() => message("CLEAR_QUEUE", { status: "done" }), "Completed items cleared"));
 
   $$(".segmented button").forEach((button) => button.addEventListener("click", () => {
     $$(".segmented button").forEach((item) => item.classList.remove("active"));
@@ -217,7 +217,7 @@
         placements
       }
     });
-    $("#settings-status").textContent = "已保存";
+    $("#settings-status").textContent = "Saved";
     setTimeout(() => { $("#settings-status").textContent = ""; }, 1800);
   }));
 
@@ -230,37 +230,37 @@
     link.download = `x-one-click-block-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }, "备份已生成"));
+  }, "Backup created"));
 
   $("#restore-file").addEventListener("change", async (event) => {
     try {
       const file = event.target.files[0];
       restorePayload = file ? JSON.parse(await file.text()) : null;
       $("#restore-data").disabled = !restorePayload;
-      if (file) toast(`已读取 ${file.name}`);
+      if (file) toast(`Loaded ${file.name}`);
     } catch {
       restorePayload = null;
       $("#restore-data").disabled = true;
-      toast("备份文件不是有效 JSON", true);
+      toast("The backup file is not valid JSON", true);
     }
   });
 
   $("#restore-data").addEventListener("click", () => run(async () => {
-    if (!restorePayload) throw new Error("请先选择备份文件");
+    if (!restorePayload) throw new Error("Choose a backup file first");
     await Store.importData(restorePayload, {
       blocks: $("#import-blocks").checked,
       mutes: $("#import-mutes").checked,
       settings: $("#import-settings").checked
     });
-  }, "备份已恢复"));
+  }, "Backup restored"));
 
   $$("[data-clear]").forEach((button) => button.addEventListener("click", () => {
     const type = button.dataset.clear;
-    if (!confirm("确定清除这部分本地数据吗？此操作不会改变 X 上的状态。")) return;
+    if (!confirm("Clear this local data? This will not change any status on X.")) return;
     run(() => Store.update((draft) => {
       if (type === "settings") draft.settings = Core.mergeSettings();
       else Object.values(draft.accounts).forEach((account) => { account[type] = []; });
-    }), "本地数据已清除");
+    }), "Local data cleared");
   }));
 
   chrome.storage.onChanged.addListener(async (changes, area) => {
