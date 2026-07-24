@@ -49,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function startQueue() {
   const state = await Store.update((draft) => {
     if (!draft.queue.items.some((item) => item.status === "pending" || item.status === "error")) {
-      throw new Error("队列中没有等待处理的账号");
+      throw new Error("There are no pending accounts in the queue");
     }
     draft.queue.items.forEach((item) => {
       if (item.status === "error") {
@@ -108,7 +108,7 @@ async function processNextQueueItem() {
 
     await Store.update((draft) => {
       const target = draft.queue.items.find((entry) => entry.id === item.id);
-      if (!target) throw new Error("队列项目已被移除");
+      if (!target) throw new Error("The queue item was removed");
       target.status = "active";
       target.startedAt = Date.now();
       draft.queue.activeItemId = target.id;
@@ -125,7 +125,7 @@ async function processNextQueueItem() {
       handle: item.handle,
       action: item.action
     });
-    if (!response?.ok) throw new Error(response?.error || "X 页面没有确认操作成功");
+    if (!response?.ok) throw new Error(response?.error || "X did not confirm the action");
 
     await Store.update((draft) => {
       const target = draft.queue.items.find((entry) => entry.id === item.id);
@@ -192,7 +192,7 @@ function waitForTabComplete(tabId, timeout) {
     if (current.status === "complete") return resolve();
     const timer = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
-      reject(new Error("X 用户页加载超时"));
+      reject(new Error("The X profile page timed out"));
     }, timeout);
     function listener(updatedId, changeInfo) {
       if (updatedId !== tabId || changeInfo.status !== "complete") return;
@@ -214,5 +214,5 @@ async function sendMessageWithRetry(tabId, message) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
-  throw new Error(lastError?.message || "无法连接到 X 页面");
+  throw new Error(lastError?.message || "Could not connect to the X page");
 }
