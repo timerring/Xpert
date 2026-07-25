@@ -1,13 +1,14 @@
 importScripts("shared/core.js", "shared/storage.js");
 
-const Core = globalThis.XBlockCore;
-const Store = globalThis.XBlockStorage;
-const QUEUE_ALARM = "xblock-process-queue";
+const Core = globalThis.XMuteCore;
+const Store = globalThis.XMuteStorage;
+const QUEUE_ALARM = "xmute-process-queue";
 let processing = false;
 
 chrome.runtime.onInstalled.addListener(async () => {
   const state = await Store.getState();
   await Store.saveState(state);
+  if (state.queue.running) scheduleNext(500);
 });
 
 chrome.runtime.onStartup.addListener(async () => {
@@ -24,11 +25,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   const handlers = {
     GET_STATE: () => Store.getState(),
-    RECORD_ACTION: () => Store.recordAction(message.handle, message.action, message.source, message.viewer),
+    RECORD_MUTE: () => Store.recordMute(message.handle, message.source, message.viewer),
     SAVE_SETTINGS: () => Store.update((state) => {
       state.settings = Core.mergeSettings({ ...state.settings, ...message.settings });
     }),
-    ADD_QUEUE: () => Store.addQueue(message.handles, message.action),
+    ADD_QUEUE: () => Store.addQueue(message.handles),
     CLEAR_QUEUE: () => Store.clearQueue(message.status),
     START_QUEUE: startQueue,
     STOP_QUEUE: stopQueue,
@@ -121,11 +122,10 @@ async function processNextQueueItem() {
     createdTabId = tab.id;
     await waitForTabComplete(createdTabId, 20000);
     const response = await sendMessageWithRetry(createdTabId, {
-      type: "PROCESS_PROFILE_ACTION",
-      handle: item.handle,
-      action: item.action
+      type: "PROCESS_PROFILE_MUTE",
+      handle: item.handle
     });
-    if (!response?.ok) throw new Error(response?.error || "X did not confirm the action");
+    if (!response?.ok) throw new Error(response?.error || "X did not confirm the mute");
 
     await Store.update((draft) => {
       const target = draft.queue.items.find((entry) => entry.id === item.id);
