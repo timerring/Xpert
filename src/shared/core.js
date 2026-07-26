@@ -73,6 +73,7 @@
 
   function routePlacement(pathname) {
     const path = String(pathname || "/").toLowerCase();
+    if (path.startsWith("/settings")) return "unsupported";
     if (/\/(?:followers|verified_followers)$/.test(path)) return "followers";
     if (/\/following$/.test(path)) return "following";
     if (/\/status\/\d+\/(?:retweets|likes|quotes)/.test(path)) return "engagements";
@@ -110,51 +111,45 @@
     }));
   }
 
-  function muteExecutionMode(surface) {
-    return surface === "cell" ? "profile-tab" : "inline-menu";
-  }
-
   function shouldOfferMute(viewer, target) {
     const normalizedTarget = normalizeHandle(target);
     return Boolean(normalizedTarget && normalizeHandle(viewer) !== normalizedTarget);
   }
 
-  function findMenuButton(root, isProfile) {
-    if (isProfile) {
-      return root.querySelector('[data-testid="userActions"]');
-    }
-    return root.querySelector('button[data-testid="caret"]') ||
-      root.querySelector('[data-testid="userActions"]') ||
-      root.querySelector('button[aria-label*="More"]');
+  function extractUserId(testId) {
+    const match = String(testId || "").match(/^(\d+)-(?:un)?follow$/);
+    return match?.[1] || "";
   }
 
-  function findMuteMenuItem(root) {
-    const unmute = root.querySelector('[data-testid="unmute"]');
-    if (unmute) return { element: unmute, alreadyDone: true };
-
-    const mute = root.querySelector('[data-testid="mute"]');
-    if (mute) return { element: mute, alreadyDone: false };
-
-    for (const menu of root.querySelectorAll('[role="menu"]')) {
-      for (const item of menu.querySelectorAll('[role="menuitem"]')) {
-        const label = (item.getAttribute("aria-label") || item.textContent || "").trim();
-        if (/^Unmute(?:\s+@[\w_]+)?$/i.test(label)) return { element: item, alreadyDone: true };
-        if (/^Mute(?:\s+@[\w_]+)?$/i.test(label)) return { element: item, alreadyDone: false };
-      }
+  function makeMuteRequestBody(handle, userId) {
+    const normalizedUserId = String(userId || "").trim();
+    if (/^\d+$/.test(normalizedUserId)) {
+      return new URLSearchParams({ user_id: normalizedUserId }).toString();
     }
-    return null;
+    const normalizedHandle = normalizeHandle(handle);
+    if (!normalizedHandle) throw new Error("Invalid X account");
+    return new URLSearchParams({ screen_name: normalizedHandle }).toString();
+  }
+
+  function readCookie(cookieString, name) {
+    const prefix = `${name}=`;
+    for (const part of String(cookieString || "").split(";")) {
+      const cookie = part.trim();
+      if (cookie.startsWith(prefix)) return decodeURIComponent(cookie.slice(prefix.length));
+    }
+    return "";
   }
 
   return {
     DEFAULT_SETTINGS,
     PLACEMENTS,
-    findMenuButton,
-    findMuteMenuItem,
+    extractUserId,
+    makeMuteRequestBody,
     makeQueueItems,
     mergeSettings,
-    muteExecutionMode,
     normalizeHandle,
     parseHandles,
+    readCookie,
     routePlacement,
     shouldOfferMute
   };

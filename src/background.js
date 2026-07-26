@@ -33,7 +33,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     CLEAR_QUEUE: () => Store.clearQueue(message.status),
     START_QUEUE: startQueue,
     STOP_QUEUE: stopQueue,
-    MUTE_VIA_PROFILE: () => muteAccountViaProfile(message.handle, "one-click"),
     OPEN_OPTIONS: async () => {
       await chrome.runtime.openOptionsPage();
       return { opened: true };

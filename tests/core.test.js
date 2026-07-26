@@ -22,6 +22,8 @@ test("parseHandles supports exported arrays", () => {
 });
 
 test("routePlacement categorizes supported X routes", () => {
+  assert.equal(Core.routePlacement("/settings/muted/all"), "unsupported");
+  assert.equal(Core.routePlacement("/settings/blocked/all"), "unsupported");
   assert.equal(Core.routePlacement("/someone/followers"), "followers");
   assert.equal(Core.routePlacement("/someone/status/123/retweets"), "engagements");
   assert.equal(Core.routePlacement("/someone/status/123"), "replies");
