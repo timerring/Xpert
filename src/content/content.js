@@ -4,6 +4,7 @@
   const Core = globalThis.XMuteCore;
   const Store = globalThis.XMuteStorage;
   const MARKER = "xmInjected";
+  const X_WEB_BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
   let settings = Core.mergeSettings();
   let scanTimer = null;
   let lastPath = location.pathname;
@@ -12,25 +13,6 @@
     mute: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.62 2.21 2.21 3.62l4.17 4.17H3v8h4l5 4v-6.17l4.88 4.88A8.92 8.92 0 0 1 14 20v2a10.9 10.9 0 0 0 4.3-2.08l2.08 2.08 1.41-1.41L3.62 2.21ZM10 15.84l-2-1.6V9.41l2 2v4.43ZM12 4 9.91 5.67 12 7.76V4Zm6.59 9.59 1.55 1.55A10.9 10.9 0 0 0 21 11h-2c0 .9-.14 1.77-.41 2.59ZM16 11c0 .08 0 .15-.01.23l1.72 1.72c.19-.62.29-1.27.29-1.95 0-2.76-1.67-5.13-4-6.17V7.1c1.2.83 2 2.26 2 3.9Z"/></svg>',
     settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19.14 12.94.04-.94-.04-.94 2.03-1.58-1.92-3.32-2.39.96a7.3 7.3 0 0 0-1.62-.94L14.88 3h-3.76l-.36 3.18c-.58.24-1.12.55-1.62.94l-2.39-.96-1.92 3.32 2.03 1.58-.04.94.04.94-2.03 1.58 1.92 3.32 2.39-.96c.5.39 1.04.7 1.62.94l.36 3.18h3.76l.36-3.18c.58-.24 1.12-.55 1.62-.94l2.39.96 1.92-3.32-2.03-1.58ZM13 15.5A3.5 3.5 0 1 1 13 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>'
   };
-
-  function waitFor(find, description, timeout = 4000) {
-    return new Promise((resolve, reject) => {
-      const found = find();
-      if (found) return resolve(found);
-      const observer = new MutationObserver(() => {
-        const element = find();
-        if (!element) return;
-        observer.disconnect();
-        clearTimeout(timer);
-        resolve(element);
-      });
-      observer.observe(document.documentElement, { childList: true, subtree: true });
-      const timer = setTimeout(() => {
-        observer.disconnect();
-        reject(new Error(`Timed out waiting for ${description}`));
-      }, timeout);
-    });
-  }
 
   function extractHandle(root) {
     const anchors = [...root.querySelectorAll('a[href^="/"]')];
@@ -55,12 +37,18 @@
     return Core.normalizeHandle(location.pathname.split("/").filter(Boolean)[0] || "");
   }
 
-  function createButton(handle, kind) {
+  function extractUserId(root) {
+    const followButton = root.querySelector('[data-testid$="-follow"], [data-testid$="-unfollow"]');
+    return Core.extractUserId(followButton?.getAttribute("data-testid"));
+  }
+
+  function createButton(handle, kind, userId = "") {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `xm-one-click xm-one-click--${kind}`;
     button.dataset.handle = handle;
     button.dataset.surface = kind;
+    if (userId) button.dataset.userId = userId;
     button.innerHTML = `${ICONS.mute}<span>Mute</span>`;
     button.title = `Mute @${handle}`;
     button.setAttribute("aria-label", button.title);
@@ -74,22 +62,13 @@
     const button = event.currentTarget;
     button.disabled = true;
     try {
-      if (Core.muteExecutionMode(button.dataset.surface) === "profile-tab") {
-        const response = await chrome.runtime.sendMessage({
-          type: "MUTE_VIA_PROFILE",
-          handle: button.dataset.handle
-        });
-        if (!response?.ok) throw new Error(response?.error || "X did not confirm the mute");
-      } else {
-        const root = button.closest('article[data-testid="tweet"]') || document;
-        await performOfficialMute(root, button.dataset.handle);
-        await chrome.runtime.sendMessage({
-          type: "RECORD_MUTE",
-          handle: button.dataset.handle,
-          source: "one-click",
-          viewer: detectViewer()
-        });
-      }
+      await performDirectMute(button.dataset.handle, button.dataset.userId);
+      await chrome.runtime.sendMessage({
+        type: "RECORD_MUTE",
+        handle: button.dataset.handle,
+        source: "one-click",
+        viewer: detectViewer()
+      });
       button.remove();
     } catch (error) {
       button.disabled = false;
@@ -97,26 +76,36 @@
     }
   }
 
-  async function performOfficialMute(root, handle) {
+  async function performDirectMute(handle, userId) {
     const viewer = detectViewer();
     if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error("You cannot mute your own account");
 
-    const menuButton = Core.findMenuButton(root, root === document);
-    if (!menuButton) throw new Error("Account menu not found");
-    menuButton.click();
+    const csrfToken = Core.readCookie(document.cookie, "ct0");
+    if (!csrfToken) throw new Error("X session token is unavailable; refresh X and try again");
 
-    const action = await waitFor(
-      () => Core.findMuteMenuItem(document),
-      "the Mute action in the account menu"
-    );
-    if (action.alreadyDone) {
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-      return { alreadyDone: true };
+    const response = await fetch("https://x.com/i/api/1.1/mutes/users/create.json", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        authorization: `Bearer ${X_WEB_BEARER_TOKEN}`,
+        "content-type": "application/x-www-form-urlencoded",
+        "x-csrf-token": csrfToken,
+        "x-twitter-active-user": "yes",
+        "x-twitter-auth-type": "OAuth2Session",
+        "x-twitter-client-language": document.documentElement.lang || "en"
+      },
+      body: Core.makeMuteRequestBody(handle, userId)
+    });
+    if (!response.ok) {
+      let detail = "";
+      try {
+        const payload = await response.json();
+        detail = payload?.errors?.[0]?.message || payload?.error || "";
+      } catch {
+        // X may return an empty or non-JSON error response.
+      }
+      throw new Error(detail || `X rejected the mute request (${response.status})`);
     }
-    action.element.click();
-
-    const possibleConfirm = document.querySelector('[data-testid="confirmationSheetConfirm"]');
-    if (possibleConfirm) possibleConfirm.click();
     return { alreadyDone: false };
   }
 
@@ -141,7 +130,7 @@
       cell.dataset[MARKER] = "1";
       const followButton = cell.querySelector('[data-testid$="-follow"], [data-testid$="-unfollow"]');
       const target = followButton?.parentElement || cell.firstElementChild || cell;
-      const button = createButton(handle, "cell");
+      const button = createButton(handle, "cell", extractUserId(cell));
       target.append(button);
       if (followButton) matchButtonSize(button, followButton, true);
     }
@@ -169,7 +158,7 @@
     while (followWrapper.parentElement && followWrapper.parentElement !== actions) {
       followWrapper = followWrapper.parentElement;
     }
-    const button = createButton(handle, "profile");
+    const button = createButton(handle, "profile", extractUserId(actions));
     actions.insertBefore(button, followWrapper);
     matchButtonSize(button, followButton);
   }
@@ -250,7 +239,7 @@
     (async () => {
       const handle = Core.normalizeHandle(message.handle);
       if (!handle || profileHandle() !== handle) throw new Error("The opened profile does not match the queued account");
-      const result = await performOfficialMute(document, handle);
+      const result = await performDirectMute(handle, message.userId);
       await chrome.runtime.sendMessage({
         type: "RECORD_MUTE",
         handle,
