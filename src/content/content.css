@@ -1,5 +1,5 @@
-.xb-one-click {
-  --xb-accent: rgb(244, 33, 46);
+.xm-one-click {
+  --xm-accent: rgb(120, 86, 255);
   align-items: center;
   background: transparent;
   border: 0;
@@ -16,43 +16,39 @@
   transition: background-color .15s, color .15s, opacity .15s;
 }
 
-.xb-one-click:hover {
-  background: color-mix(in srgb, var(--xb-accent) 10%, transparent);
-  color: var(--xb-accent);
+.xm-one-click:hover {
+  background: color-mix(in srgb, var(--xm-accent) 10%, transparent);
+  color: var(--xm-accent);
 }
 
-.xb-one-click[data-action="mute"] {
-  --xb-accent: rgb(120, 86, 255);
-}
-
-.xb-one-click:disabled {
+.xm-one-click:disabled {
   cursor: progress;
   opacity: .55;
 }
 
-.xb-one-click svg {
+.xm-one-click svg {
   fill: currentColor;
   height: 18px;
   width: 18px;
 }
 
-.xb-one-click--cell {
+.xm-one-click--cell {
   flex: 0 0 auto;
   margin-top: 8px;
 }
 
-.xb-one-click--tweet {
+.xm-one-click--tweet {
   flex: 0 0 auto;
   min-height: 34px;
   padding: 0;
   width: 34px;
 }
 
-.xb-one-click--tweet span {
+.xm-one-click--tweet span {
   display: none;
 }
 
-.xb-one-click--profile {
+.xm-one-click--profile {
   align-self: flex-start;
   border: 1px solid rgb(207, 217, 222);
   color: rgb(15, 20, 25);
@@ -60,7 +56,7 @@
   margin-right: 8px;
 }
 
-.xb-settings-shortcut {
+.xm-settings-shortcut {
   align-items: center;
   background: rgb(15, 20, 25);
   border: 0;
@@ -78,13 +74,13 @@
   z-index: 9999;
 }
 
-.xb-settings-shortcut svg {
+.xm-settings-shortcut svg {
   fill: currentColor;
   height: 21px;
   width: 21px;
 }
 
-.xb-toast {
+.xm-toast {
   background: rgb(29, 155, 240);
   border-radius: 6px;
   bottom: 26px;
@@ -101,12 +97,12 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .xb-one-click--profile {
+  .xm-one-click--profile {
     border-color: rgb(83, 100, 113);
     color: rgb(231, 233, 234);
   }
 
-  .xb-settings-shortcut {
+  .xm-settings-shortcut {
     background: rgb(239, 243, 244);
     color: rgb(15, 20, 25);
   }

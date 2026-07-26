@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>X One Click Block Control Center</title>
+  <title>X One Click Mute Control Center</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -11,12 +11,12 @@
     <aside class="sidebar">
       <div class="brand">
         <span class="brand-mark">X</span>
-        <div><strong>One Click Block</strong><small>Control Center</small></div>
+        <div><strong>One Click Mute</strong><small>Control Center</small></div>
       </div>
       <nav aria-label="Control Center navigation">
         <button class="nav-item active" data-view="overview">Overview</button>
         <button class="nav-item" data-view="queue">Bulk Queue <span id="queue-badge"></span></button>
-        <button class="nav-item" data-view="ledger">Action Ledger</button>
+        <button class="nav-item" data-view="ledger">Mute Ledger</button>
         <button class="nav-item" data-view="settings">Settings</button>
         <button class="nav-item" data-view="backup">Backup & Restore</button>
       </nav>
@@ -34,14 +34,13 @@
 
       <section class="view active" id="view-overview">
         <div class="heading">
-          <div><p class="eyebrow">Dashboard</p><h1>Action Overview</h1></div>
-          <p>Local statistics for one-click actions and bulk runs.</p>
+          <div><p class="eyebrow">Dashboard</p><h1>Mute Overview</h1></div>
+          <p>Local statistics for one-click mutes and bulk runs.</p>
         </div>
         <div class="stat-grid">
-          <article class="stat-card danger"><span>Blocked</span><strong id="stat-blocked">0</strong><small>accounts</small></article>
           <article class="stat-card purple"><span>Muted</span><strong id="stat-muted">0</strong><small>accounts</small></article>
-          <article class="stat-card blue"><span>Queue Completed</span><strong id="stat-done">0</strong><small>actions</small></article>
-          <article class="stat-card neutral"><span>Pending</span><strong id="stat-pending">0</strong><small>actions</small></article>
+          <article class="stat-card blue"><span>Queue Completed</span><strong id="stat-done">0</strong><small>mutes</small></article>
+          <article class="stat-card neutral"><span>Pending</span><strong id="stat-pending">0</strong><small>accounts</small></article>
         </div>
         <article class="panel">
           <div class="panel-title"><div><h2>Recent Runs</h2><p>Up to 100 runs are retained</p></div></div>
@@ -59,10 +58,6 @@
           <textarea id="handles-input" rows="7" placeholder="@jack&#10;https://x.com/someone&#10;another_user"></textarea>
           <div class="composer-actions">
             <label class="file-button">Import CSV / JSON<input id="queue-file" type="file" accept=".csv,.json,.txt"></label>
-            <select id="queue-action" aria-label="Bulk action">
-              <option value="block">Block</option>
-              <option value="mute">Mute</option>
-            </select>
             <button class="button primary" id="add-queue">Add to Queue</button>
           </div>
           <p id="parse-preview" class="hint">Handles are validated and deduplicated automatically.</p>
@@ -82,15 +77,11 @@
 
       <section class="view" id="view-ledger">
         <div class="heading">
-          <div><p class="eyebrow">Local ledger</p><h1>Action Ledger</h1></div>
-          <p>Only actions completed through this extension are recorded.</p>
+          <div><p class="eyebrow">Local ledger</p><h1>Mute Ledger</h1></div>
+          <p>Only mutes completed through this extension are recorded.</p>
         </div>
         <article class="panel">
           <div class="ledger-tools">
-            <div class="segmented" role="group" aria-label="Ledger type">
-              <button class="active" data-ledger="blocked">Blocked</button>
-              <button data-ledger="muted">Muted</button>
-            </div>
             <input id="ledger-search" type="search" placeholder="Search @handle">
           </div>
           <div id="ledger-list" class="list empty">No records yet.</div>
@@ -100,13 +91,9 @@
       <section class="view" id="view-settings">
         <div class="heading">
           <div><p class="eyebrow">Preferences</p><h1>Settings</h1></div>
-          <p>Choose the default action and where buttons appear.</p>
+          <p>Choose where Mute buttons appear and configure queue processing.</p>
         </div>
         <article class="panel settings-panel">
-          <div class="field-row">
-            <div><label for="default-action">Default one-click action</label><p>Page buttons immediately perform the selected action.</p></div>
-            <select id="default-action"><option value="block">Block</option><option value="mute">Mute</option></select>
-          </div>
           <div class="field-row">
             <div><label for="queue-delay">Queue delay</label><p>A longer delay may reduce temporary rate limits from X.</p></div>
             <select id="queue-delay">
@@ -134,14 +121,13 @@
         </div>
         <div class="backup-grid">
           <article class="panel">
-            <h2>Export Full Backup</h2><p>Includes Block and Mute ledgers for all accounts, settings, queue, and run history.</p>
+            <h2>Export Full Backup</h2><p>Includes Mute ledgers for all accounts, settings, queue, and run history.</p>
             <button id="export-data" class="button primary">Download JSON Backup</button>
           </article>
           <article class="panel">
             <h2>Restore Backup</h2><p>Matching accounts are merged, keeping the most recent records.</p>
             <label class="file-button wide">Choose Backup File<input id="restore-file" type="file" accept=".json"></label>
             <div class="check-row">
-              <label><input id="import-blocks" type="checkbox" checked> Block ledger</label>
               <label><input id="import-mutes" type="checkbox" checked> Mute ledger</label>
               <label><input id="import-settings" type="checkbox" checked> Settings</label>
             </div>
@@ -149,9 +135,8 @@
           </article>
         </div>
         <article class="panel danger-zone">
-          <h2>Clear Local Data</h2><p>This clears extension records without changing Block or Mute status on X.</p>
+          <h2>Clear Local Data</h2><p>This clears extension records without changing Mute status on X.</p>
           <div class="button-row">
-            <button class="button danger-button" data-clear="blocked">Clear Block Ledger</button>
             <button class="button danger-button" data-clear="muted">Clear Mute Ledger</button>
             <button class="button danger-button" data-clear="settings">Reset Settings</button>
           </div>

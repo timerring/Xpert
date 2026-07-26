@@ -1,15 +1,14 @@
 (function () {
   "use strict";
 
-  const Core = globalThis.XBlockCore;
-  const Store = globalThis.XBlockStorage;
-  const MARKER = "xbInjected";
+  const Core = globalThis.XMuteCore;
+  const Store = globalThis.XMuteStorage;
+  const MARKER = "xmInjected";
   let settings = Core.mergeSettings();
   let scanTimer = null;
   let lastPath = location.pathname;
 
   const ICONS = {
-    block: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 2a7.96 7.96 0 0 1 4.9 1.69L5.69 16.9A8 8 0 0 1 12 4Zm0 16a7.96 7.96 0 0 1-4.9-1.69L18.31 7.1A8 8 0 0 1 12 20Z"/></svg>',
     mute: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.62 2.21 2.21 3.62l4.17 4.17H3v8h4l5 4v-6.17l4.88 4.88A8.92 8.92 0 0 1 14 20v2a10.9 10.9 0 0 0 4.3-2.08l2.08 2.08 1.41-1.41L3.62 2.21ZM10 15.84l-2-1.6V9.41l2 2v4.43ZM12 4 9.91 5.67 12 7.76V4Zm6.59 9.59 1.55 1.55A10.9 10.9 0 0 0 21 11h-2c0 .9-.14 1.77-.41 2.59ZM16 11c0 .08 0 .15-.01.23l1.72 1.72c.19-.62.29-1.27.29-1.95 0-2.76-1.67-5.13-4-6.17V7.1c1.2.83 2 2.26 2 3.9Z"/></svg>',
     settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19.14 12.94.04-.94-.04-.94 2.03-1.58-1.92-3.32-2.39.96a7.3 7.3 0 0 0-1.62-.94L14.88 3h-3.76l-.36 3.18c-.58.24-1.12.55-1.62.94l-2.39-.96-1.92 3.32 2.03 1.58-.04.94.04.94-2.03 1.58 1.92 3.32 2.39-.96c.5.39 1.04.7 1.62.94l.36 3.18h3.76l.36-3.18c.58-.24 1.12-.55 1.62-.94l2.39.96 1.92-3.32-2.03-1.58ZM13 15.5A3.5 3.5 0 1 1 13 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>'
   };
@@ -56,19 +55,13 @@
     return Core.normalizeHandle(location.pathname.split("/").filter(Boolean)[0] || "");
   }
 
-  function actionLabel(action) {
-    return action === "mute" ? "Mute" : "Block";
-  }
-
   function createButton(handle, kind) {
-    const action = settings.defaultAction;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `xb-one-click xb-one-click--${kind}`;
-    button.dataset.action = action;
+    button.className = `xm-one-click xm-one-click--${kind}`;
     button.dataset.handle = handle;
-    button.innerHTML = `${ICONS[action]}<span>${actionLabel(action)}</span>`;
-    button.title = `${actionLabel(action)} @${handle}`;
+    button.innerHTML = `${ICONS.mute}<span>Mute</span>`;
+    button.title = `Mute @${handle}`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", onActionClick, true);
     return button;
@@ -81,11 +74,10 @@
     button.disabled = true;
     try {
       const root = button.closest('article[data-testid="tweet"], [data-testid="UserCell"]') || document;
-      await performOfficialAction(root, button.dataset.action, button.dataset.handle);
+      await performOfficialMute(root, button.dataset.handle);
       await chrome.runtime.sendMessage({
-        type: "RECORD_ACTION",
+        type: "RECORD_MUTE",
         handle: button.dataset.handle,
-        action: button.dataset.action,
         source: "one-click",
         viewer: detectViewer()
       });
@@ -96,34 +88,29 @@
     }
   }
 
-  async function performOfficialAction(root, action, handle) {
+  async function performOfficialMute(root, handle) {
     const viewer = detectViewer();
-    if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error("You cannot perform this action on your own account");
+    if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error("You cannot mute your own account");
 
     const menuButton = root.querySelector('button[data-testid="caret"]') ||
       root.querySelector('[data-testid="userActions"]') ||
       root.querySelector('button[aria-label*="More"]');
-    if (!menuButton) throw new Error("Account action menu not found");
+    if (!menuButton) throw new Error("Account menu not found");
     menuButton.click();
 
-    const alreadySelector = action === "mute" ? '[data-testid="unmute"]' : '[data-testid="unblock"]';
-    const actionSelector = action === "mute" ? '[data-testid="mute"]' : '[data-testid="block"]';
+    const alreadySelector = '[data-testid="unmute"]';
+    const actionSelector = '[data-testid="mute"]';
     await waitFor(`${actionSelector}, ${alreadySelector}`);
     if (document.querySelector(alreadySelector)) {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
       return { alreadyDone: true };
     }
     const item = document.querySelector(actionSelector);
-    if (!item) throw new Error(`${actionLabel(action)} is not available in the account menu`);
+    if (!item) throw new Error("Mute is not available in the account menu");
     item.click();
 
-    if (action === "block") {
-      const confirm = await waitFor('[data-testid="confirmationSheetConfirm"]');
-      confirm.click();
-    } else {
-      const possibleConfirm = document.querySelector('[data-testid="confirmationSheetConfirm"]');
-      if (possibleConfirm) possibleConfirm.click();
-    }
+    const possibleConfirm = document.querySelector('[data-testid="confirmationSheetConfirm"]');
+    if (possibleConfirm) possibleConfirm.click();
     return { alreadyDone: false };
   }
 
@@ -153,7 +140,7 @@
   }
 
   function injectProfileButton() {
-    if (document.querySelector(".xb-one-click--profile")) return;
+    if (document.querySelector(".xm-one-click--profile")) return;
     const handle = profileHandle();
     const viewer = detectViewer();
     if (!handle || handle === viewer) return;
@@ -202,7 +189,7 @@
   }
 
   function updateShortcut() {
-    let shortcut = document.querySelector(".xb-settings-shortcut");
+    let shortcut = document.querySelector(".xm-settings-shortcut");
     if (!settings.showShortcut) {
       shortcut?.remove();
       return;
@@ -210,8 +197,8 @@
     if (shortcut) return;
     shortcut = document.createElement("button");
     shortcut.type = "button";
-    shortcut.className = "xb-settings-shortcut";
-    shortcut.title = "Open X One Click Block Control Center";
+    shortcut.className = "xm-settings-shortcut";
+    shortcut.title = "Open X One Click Mute Control Center";
     shortcut.setAttribute("aria-label", shortcut.title);
     shortcut.innerHTML = ICONS.settings;
     shortcut.addEventListener("click", () => chrome.runtime.sendMessage({ type: "OPEN_OPTIONS" }));
@@ -224,7 +211,7 @@
       const path = location.pathname;
       if (path !== lastPath) {
         lastPath = path;
-        document.querySelectorAll(".xb-one-click").forEach((button) => button.remove());
+        document.querySelectorAll(".xm-one-click").forEach((button) => button.remove());
         document.querySelectorAll(`[data-${MARKER.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}]`)
           .forEach((element) => delete element.dataset[MARKER]);
       }
@@ -241,9 +228,9 @@
   }
 
   function showToast(message, isError) {
-    document.querySelector(".xb-toast")?.remove();
+    document.querySelector(".xm-toast")?.remove();
     const toast = document.createElement("div");
-    toast.className = "xb-toast";
+    toast.className = "xm-toast";
     toast.textContent = message;
     if (isError) toast.style.background = "rgb(244, 33, 46)";
     document.body.append(toast);
@@ -251,15 +238,14 @@
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message?.type !== "PROCESS_PROFILE_ACTION") return undefined;
+    if (message?.type !== "PROCESS_PROFILE_MUTE") return undefined;
     (async () => {
       const handle = Core.normalizeHandle(message.handle);
       if (!handle || profileHandle() !== handle) throw new Error("The opened profile does not match the queued account");
-      const result = await performOfficialAction(document, message.action, handle);
+      const result = await performOfficialMute(document, handle);
       await chrome.runtime.sendMessage({
-        type: "RECORD_ACTION",
+        type: "RECORD_MUTE",
         handle,
-        action: message.action,
         source: "queue",
         viewer: detectViewer()
       });
@@ -274,8 +260,8 @@
     const nextSettings = Core.mergeSettings(changes.state.newValue?.settings);
     if (JSON.stringify(settings) === JSON.stringify(nextSettings)) return;
     settings = nextSettings;
-    document.querySelectorAll(".xb-one-click").forEach((button) => button.remove());
-    document.querySelectorAll(`[data-xb-injected]`).forEach((element) => delete element.dataset[MARKER]);
+    document.querySelectorAll(".xm-one-click").forEach((button) => button.remove());
+    document.querySelectorAll(`[data-xm-injected]`).forEach((element) => delete element.dataset[MARKER]);
     scan();
   });
 

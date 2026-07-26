@@ -1,10 +1,9 @@
 (function () {
   "use strict";
 
-  const Core = globalThis.XBlockCore;
-  const Store = globalThis.XBlockStorage;
+  const Core = globalThis.XMuteCore;
+  const Store = globalThis.XMuteStorage;
   let state;
-  let ledgerType = "blocked";
   let restorePayload = null;
   let toastTimer;
 
@@ -29,7 +28,7 @@
   }
 
   function viewerAccount() {
-    return state.accounts[state.currentViewer] || { blocked: [], muted: [] };
+    return state.accounts[state.currentViewer] || { muted: [] };
   }
 
   function render() {
@@ -52,7 +51,6 @@
 
   function renderStats() {
     const account = viewerAccount();
-    $("#stat-blocked").textContent = account.blocked.length;
     $("#stat-muted").textContent = account.muted.length;
     $("#stat-done").textContent = state.queue.items.filter((item) => item.status === "done").length;
     $("#stat-pending").textContent = state.queue.items.filter((item) => item.status === "pending" || item.status === "active").length;
@@ -91,7 +89,7 @@
     container.className = "list";
     container.innerHTML = [...items].reverse().map((item) => `
       <div class="list-row" title="${escapeHtml(item.error || "")}">
-        <div><div class="handle">@${escapeHtml(item.handle)}</div><div class="meta">${item.action === "mute" ? "Mute" : "Block"}</div></div>
+        <div><div class="handle">@${escapeHtml(item.handle)}</div><div class="meta">Mute</div></div>
         <span class="status ${escapeHtml(item.status)}">${statusLabels[item.status] || item.status}</span>
         <span class="meta">${formatDate(item.createdAt)}</span>
         <span class="meta">${item.error ? escapeHtml(item.error) : item.alreadyDone ? "Already completed" : ""}</span>
@@ -100,7 +98,7 @@
 
   function renderLedger() {
     const query = Core.normalizeHandle($("#ledger-search").value) || $("#ledger-search").value.trim().toLowerCase();
-    const entries = viewerAccount()[ledgerType].filter((entry) => !query || entry.handle.includes(query));
+    const entries = viewerAccount().muted.filter((entry) => !query || entry.handle.includes(query));
     const container = $("#ledger-list");
     if (!entries.length) {
       container.className = "list empty";
@@ -111,13 +109,12 @@
     container.innerHTML = entries.map((entry) => `
       <div class="list-row ledger-row">
         <a class="handle" href="https://x.com/${encodeURIComponent(entry.handle)}" target="_blank" rel="noreferrer">@${escapeHtml(entry.handle)}</a>
-        <span class="meta">${entry.source === "queue" ? "Bulk queue" : "One-click action"}</span>
+        <span class="meta">${entry.source === "queue" ? "Bulk queue" : "One-click mute"}</span>
         <span class="meta">${formatDate(entry.timestamp)}</span>
       </div>`).join("");
   }
 
   function renderSettings() {
-    $("#default-action").value = state.settings.defaultAction;
     $("#queue-delay").value = String(state.settings.queueDelayMs);
     if (!$("#queue-delay").value) $("#queue-delay").value = "1800";
     $("#show-shortcut").checked = state.settings.showShortcut;
@@ -185,7 +182,7 @@
   $("#add-queue").addEventListener("click", () => run(async () => {
     const handles = Core.parseHandles($("#handles-input").value);
     if (!handles.length) throw new Error("No valid X handles found");
-    await message("ADD_QUEUE", { handles, action: $("#queue-action").value });
+    await message("ADD_QUEUE", { handles });
     $("#handles-input").value = "";
     $("#handles-input").dispatchEvent(new Event("input"));
   }, "Added to the bulk queue"));
@@ -194,12 +191,6 @@
   $("#stop-queue").addEventListener("click", () => run(() => message("STOP_QUEUE"), "Queue stopped"));
   $("#clear-completed").addEventListener("click", () => run(() => message("CLEAR_QUEUE", { status: "done" }), "Completed items cleared"));
 
-  $$(".segmented button").forEach((button) => button.addEventListener("click", () => {
-    $$(".segmented button").forEach((item) => item.classList.remove("active"));
-    button.classList.add("active");
-    ledgerType = button.dataset.ledger;
-    renderLedger();
-  }));
   $("#ledger-search").addEventListener("input", renderLedger);
 
   $("#viewer-select").addEventListener("change", () => run(() => Store.update((draft) => {
@@ -211,7 +202,6 @@
     $$("[data-placement]").forEach((input) => { placements[input.dataset.placement] = input.checked; });
     await message("SAVE_SETTINGS", {
       settings: {
-        defaultAction: $("#default-action").value,
         queueDelayMs: Number($("#queue-delay").value),
         showShortcut: $("#show-shortcut").checked,
         placements
@@ -227,7 +217,7 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `x-one-click-block-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `x-one-click-mute-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, "Backup created"));
@@ -248,7 +238,6 @@
   $("#restore-data").addEventListener("click", () => run(async () => {
     if (!restorePayload) throw new Error("Choose a backup file first");
     await Store.importData(restorePayload, {
-      blocks: $("#import-blocks").checked,
       mutes: $("#import-mutes").checked,
       settings: $("#import-settings").checked
     });

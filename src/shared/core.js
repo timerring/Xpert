@@ -1,7 +1,7 @@
 (function (root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  root.XBlockCore = api;
+  root.XMuteCore = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
@@ -17,7 +17,6 @@
   ];
 
   const DEFAULT_SETTINGS = Object.freeze({
-    defaultAction: "block",
     showShortcut: true,
     queueDelayMs: 1800,
     placements: Object.freeze(Object.fromEntries(PLACEMENTS.map((key) => [key, true])))
@@ -41,7 +40,7 @@
       for (const key of ["handle", "username", "screen_name", "url"]) {
         if (typeof value[key] === "string") output.push(value[key]);
       }
-      for (const key of ["handles", "users", "accounts", "data", "blocked", "muted"]) {
+      for (const key of ["handles", "users", "accounts", "data", "muted"]) {
         if (value[key] != null) collectStrings(value[key], output);
       }
     }
@@ -92,9 +91,7 @@
   function mergeSettings(settings) {
     const value = settings && typeof settings === "object" ? settings : {};
     return {
-      ...DEFAULT_SETTINGS,
-      ...value,
-      defaultAction: value.defaultAction === "mute" ? "mute" : "block",
+      showShortcut: value.showShortcut !== false,
       queueDelayMs: Math.min(30000, Math.max(750, Number(value.queueDelayMs) || DEFAULT_SETTINGS.queueDelayMs)),
       placements: {
         ...DEFAULT_SETTINGS.placements,
@@ -103,12 +100,11 @@
     };
   }
 
-  function makeQueueItems(handles, action, now) {
+  function makeQueueItems(handles, now) {
     const timestamp = now || Date.now();
     return parseHandles(handles).map((handle, index) => ({
       id: `${timestamp}-${index}-${Math.random().toString(36).slice(2, 8)}`,
       handle,
-      action: action === "mute" ? "mute" : "block",
       status: "pending",
       createdAt: timestamp
     }));

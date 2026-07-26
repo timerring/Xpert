@@ -40,7 +40,7 @@ main { min-width: 0; }
 .heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 26px; }
 .heading h1 { font-size: 28px; letter-spacing: -.03em; margin: 0; }
 .heading > p { color: var(--muted); font-size: 13px; margin: 0 0 3px; }
-.stat-grid { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); margin-bottom: 18px; }
+.stat-grid { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); margin-bottom: 18px; }
 .stat-card, .panel { background: white; border: 1px solid var(--border); border-radius: 12px; }
 .stat-card { border-top: 3px solid currentColor; padding: 19px; }
 .stat-card span, .stat-card small { color: var(--muted); display: block; font-size: 12px; }
@@ -79,11 +79,8 @@ select { background: white; border: 1px solid #d9dee3; border-radius: 8px; paddi
 .status.pending { background: #f0f2f4; color: #596570; }.status.active { background: #e7f4ff; color: #0877bd; }
 .status.done { background: #e7f7ef; color: #147447; }.status.error { background: #fff0f2; color: #c71f34; }
 
-.ledger-tools { display: flex; justify-content: space-between; margin-bottom: 18px; }
+.ledger-tools { display: flex; justify-content: flex-end; margin-bottom: 18px; }
 .ledger-tools input { min-width: 260px; padding: 9px 12px; }
-.segmented { background: #eef1f3; border-radius: 8px; display: flex; padding: 3px; }
-.segmented button { background: transparent; border: 0; border-radius: 6px; color: var(--muted); font-size: 12px; font-weight: 700; padding: 7px 12px; }
-.segmented button.active { background: white; box-shadow: 0 1px 4px rgba(0,0,0,.08); color: var(--ink); }
 .ledger-row { grid-template-columns: minmax(160px, 1fr) 140px 180px; }
 
 .settings-panel { padding: 0 22px 22px; }

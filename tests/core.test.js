@@ -33,17 +33,17 @@ test("routePlacement categorizes supported X routes", () => {
 
 test("mergeSettings applies defaults and clamps delay", () => {
   const settings = Core.mergeSettings({ defaultAction: "mute", queueDelayMs: 10, placements: { search: false } });
-  assert.equal(settings.defaultAction, "mute");
+  assert.equal(Object.hasOwn(settings, "defaultAction"), false);
   assert.equal(settings.queueDelayMs, 750);
   assert.equal(settings.placements.search, false);
   assert.equal(settings.placements.timeline, true);
 });
 
-test("makeQueueItems creates normalized pending actions", () => {
-  const items = Core.makeQueueItems(["@One", "two"], "mute", 123);
-  assert.deepEqual(items.map(({ handle, action, status, createdAt }) => ({ handle, action, status, createdAt })), [
-    { handle: "one", action: "mute", status: "pending", createdAt: 123 },
-    { handle: "two", action: "mute", status: "pending", createdAt: 123 }
+test("makeQueueItems creates normalized pending mutes", () => {
+  const items = Core.makeQueueItems(["@One", "two"], 123);
+  assert.deepEqual(items.map(({ handle, status, createdAt }) => ({ handle, status, createdAt })), [
+    { handle: "one", status: "pending", createdAt: 123 },
+    { handle: "two", status: "pending", createdAt: 123 }
   ]);
   assert.notEqual(items[0].id, items[1].id);
 });

@@ -4,7 +4,7 @@ header { align-items: center; display: flex; gap: 10px; }
 .mark { align-items: center; background: #0f1419; border-radius: 8px; color: white; display: flex; font-weight: 800; height: 34px; justify-content: center; width: 34px; }
 header strong, header small { display: block; }
 header strong { font-size: 14px; } header small { color: #6d7882; font-size: 10px; margin-top: 2px; }
-.stats { border-bottom: 1px solid #e7eaed; border-top: 1px solid #e7eaed; display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0; padding: 14px 0; }
+.stats { border-bottom: 1px solid #e7eaed; border-top: 1px solid #e7eaed; display: grid; grid-template-columns: repeat(2, 1fr); margin: 16px 0; padding: 14px 0; }
 .stats div { text-align: center; }.stats div + div { border-left: 1px solid #e7eaed; }
 .stats strong, .stats span { display: block; }.stats strong { font-size: 21px; }.stats span { color: #6d7882; font-size: 10px; margin-top: 3px; }
 button { background: #0f1419; border: 0; border-radius: 8px; color: white; cursor: pointer; font-size: 12px; font-weight: 750; padding: 10px; width: 100%; }
