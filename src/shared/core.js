@@ -110,9 +110,37 @@
     }));
   }
 
+  function findMenuButton(root, isProfile) {
+    if (isProfile) {
+      return root.querySelector('[data-testid="userActions"]');
+    }
+    return root.querySelector('button[data-testid="caret"]') ||
+      root.querySelector('[data-testid="userActions"]') ||
+      root.querySelector('button[aria-label*="More"]');
+  }
+
+  function findMuteMenuItem(root) {
+    const unmute = root.querySelector('[data-testid="unmute"]');
+    if (unmute) return { element: unmute, alreadyDone: true };
+
+    const mute = root.querySelector('[data-testid="mute"]');
+    if (mute) return { element: mute, alreadyDone: false };
+
+    for (const menu of root.querySelectorAll('[role="menu"]')) {
+      for (const item of menu.querySelectorAll('[role="menuitem"]')) {
+        const label = (item.getAttribute("aria-label") || item.textContent || "").trim();
+        if (/^Unmute(?:\s+@[\w_]+)?$/i.test(label)) return { element: item, alreadyDone: true };
+        if (/^Mute(?:\s+@[\w_]+)?$/i.test(label)) return { element: item, alreadyDone: false };
+      }
+    }
+    return null;
+  }
+
   return {
     DEFAULT_SETTINGS,
     PLACEMENTS,
+    findMenuButton,
+    findMuteMenuItem,
     makeQueueItems,
     mergeSettings,
     normalizeHandle,

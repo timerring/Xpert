@@ -13,12 +13,12 @@
     settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19.14 12.94.04-.94-.04-.94 2.03-1.58-1.92-3.32-2.39.96a7.3 7.3 0 0 0-1.62-.94L14.88 3h-3.76l-.36 3.18c-.58.24-1.12.55-1.62.94l-2.39-.96-1.92 3.32 2.03 1.58-.04.94.04.94-2.03 1.58 1.92 3.32 2.39-.96c.5.39 1.04.7 1.62.94l.36 3.18h3.76l.36-3.18c.58-.24 1.12-.55 1.62-.94l2.39.96 1.92-3.32-2.03-1.58ZM13 15.5A3.5 3.5 0 1 1 13 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>'
   };
 
-  function waitFor(selector, timeout = 4000) {
+  function waitFor(find, description, timeout = 4000) {
     return new Promise((resolve, reject) => {
-      const found = document.querySelector(selector);
+      const found = find();
       if (found) return resolve(found);
       const observer = new MutationObserver(() => {
-        const element = document.querySelector(selector);
+        const element = find();
         if (!element) return;
         observer.disconnect();
         clearTimeout(timer);
@@ -27,7 +27,7 @@
       observer.observe(document.documentElement, { childList: true, subtree: true });
       const timer = setTimeout(() => {
         observer.disconnect();
-        reject(new Error(`Timed out waiting for ${selector}`));
+        reject(new Error(`Timed out waiting for ${description}`));
       }, timeout);
     });
   }
@@ -92,22 +92,19 @@
     const viewer = detectViewer();
     if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error("You cannot mute your own account");
 
-    const menuButton = root.querySelector('button[data-testid="caret"]') ||
-      root.querySelector('[data-testid="userActions"]') ||
-      root.querySelector('button[aria-label*="More"]');
+    const menuButton = Core.findMenuButton(root, root === document);
     if (!menuButton) throw new Error("Account menu not found");
     menuButton.click();
 
-    const alreadySelector = '[data-testid="unmute"]';
-    const actionSelector = '[data-testid="mute"]';
-    await waitFor(`${actionSelector}, ${alreadySelector}`);
-    if (document.querySelector(alreadySelector)) {
+    const action = await waitFor(
+      () => Core.findMuteMenuItem(document),
+      "the Mute action in the account menu"
+    );
+    if (action.alreadyDone) {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
       return { alreadyDone: true };
     }
-    const item = document.querySelector(actionSelector);
-    if (!item) throw new Error("Mute is not available in the account menu");
-    item.click();
+    action.element.click();
 
     const possibleConfirm = document.querySelector('[data-testid="confirmationSheetConfirm"]');
     if (possibleConfirm) possibleConfirm.click();
