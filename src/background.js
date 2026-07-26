@@ -33,6 +33,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     CLEAR_QUEUE: () => Store.clearQueue(message.status),
     START_QUEUE: startQueue,
     STOP_QUEUE: stopQueue,
+    MUTE_VIA_PROFILE: () => muteAccountViaProfile(message.handle, "one-click"),
     OPEN_OPTIONS: async () => {
       await chrome.runtime.openOptionsPage();
       return { opened: true };
@@ -97,7 +98,6 @@ async function processNextQueueItem() {
   if (processing) return;
   processing = true;
   let item = null;
-  let createdTabId = null;
   try {
     let state = await Store.getState();
     if (!state.queue.running) return;
@@ -115,17 +115,7 @@ async function processNextQueueItem() {
       draft.queue.activeItemId = target.id;
     });
 
-    const tab = await chrome.tabs.create({
-      active: false,
-      url: `https://x.com/${encodeURIComponent(item.handle)}`
-    });
-    createdTabId = tab.id;
-    await waitForTabComplete(createdTabId, 20000);
-    const response = await sendMessageWithRetry(createdTabId, {
-      type: "PROCESS_PROFILE_MUTE",
-      handle: item.handle
-    });
-    if (!response?.ok) throw new Error(response?.error || "X did not confirm the mute");
+    const response = await muteAccountViaProfile(item.handle, "queue");
 
     await Store.update((draft) => {
       const target = draft.queue.items.find((entry) => entry.id === item.id);
@@ -154,13 +144,6 @@ async function processNextQueueItem() {
       });
     }
   } finally {
-    if (createdTabId != null) {
-      try {
-        await chrome.tabs.remove(createdTabId);
-      } catch {
-        // The user may have closed the temporary tab.
-      }
-    }
     processing = false;
     const state = await Store.getState();
     if (state.queue.running) {
@@ -168,6 +151,36 @@ async function processNextQueueItem() {
         scheduleNext(state.settings.queueDelayMs);
       } else {
         await finishRun();
+      }
+    }
+  }
+}
+
+async function muteAccountViaProfile(handle, source) {
+  const normalizedHandle = Core.normalizeHandle(handle);
+  if (!normalizedHandle) throw new Error("Invalid X handle");
+
+  let tabId = null;
+  try {
+    const tab = await chrome.tabs.create({
+      active: false,
+      url: `https://x.com/${encodeURIComponent(normalizedHandle)}`
+    });
+    tabId = tab.id;
+    await waitForTabComplete(tabId, 20000);
+    const response = await sendMessageWithRetry(tabId, {
+      type: "PROCESS_PROFILE_MUTE",
+      handle: normalizedHandle,
+      source
+    });
+    if (!response?.ok) throw new Error(response?.error || "X did not confirm the mute");
+    return response;
+  } finally {
+    if (tabId != null) {
+      try {
+        await chrome.tabs.remove(tabId);
+      } catch {
+        // The user may have closed the temporary tab.
       }
     }
   }
