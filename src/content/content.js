@@ -60,6 +60,7 @@
     button.type = "button";
     button.className = `xm-one-click xm-one-click--${kind}`;
     button.dataset.handle = handle;
+    button.dataset.surface = kind;
     button.innerHTML = `${ICONS.mute}<span>Mute</span>`;
     button.title = `Mute @${handle}`;
     button.setAttribute("aria-label", button.title);
@@ -73,14 +74,22 @@
     const button = event.currentTarget;
     button.disabled = true;
     try {
-      const root = button.closest('article[data-testid="tweet"], [data-testid="UserCell"]') || document;
-      await performOfficialMute(root, button.dataset.handle);
-      await chrome.runtime.sendMessage({
-        type: "RECORD_MUTE",
-        handle: button.dataset.handle,
-        source: "one-click",
-        viewer: detectViewer()
-      });
+      if (Core.muteExecutionMode(button.dataset.surface) === "profile-tab") {
+        const response = await chrome.runtime.sendMessage({
+          type: "MUTE_VIA_PROFILE",
+          handle: button.dataset.handle
+        });
+        if (!response?.ok) throw new Error(response?.error || "X did not confirm the mute");
+      } else {
+        const root = button.closest('article[data-testid="tweet"]') || document;
+        await performOfficialMute(root, button.dataset.handle);
+        await chrome.runtime.sendMessage({
+          type: "RECORD_MUTE",
+          handle: button.dataset.handle,
+          source: "one-click",
+          viewer: detectViewer()
+        });
+      }
       button.remove();
     } catch (error) {
       button.disabled = false;
@@ -112,21 +121,23 @@
   }
 
   function injectTweetButtons() {
+    const viewer = detectViewer();
     for (const article of document.querySelectorAll('article[data-testid="tweet"]')) {
       if (article.dataset[MARKER]) continue;
       const handle = extractHandle(article);
       const menuButton = article.querySelector('button[data-testid="caret"]');
-      if (!handle || !menuButton?.parentElement) continue;
+      if (!Core.shouldOfferMute(viewer, handle) || !menuButton?.parentElement) continue;
       article.dataset[MARKER] = "1";
       menuButton.insertAdjacentElement("afterend", createButton(handle, "tweet"));
     }
   }
 
   function injectUserCellButtons() {
+    const viewer = detectViewer();
     for (const cell of document.querySelectorAll('[data-testid="UserCell"]')) {
       if (cell.dataset[MARKER]) continue;
       const handle = extractHandle(cell);
-      if (!handle) continue;
+      if (!Core.shouldOfferMute(viewer, handle)) continue;
       cell.dataset[MARKER] = "1";
       const followButton = cell.querySelector('[data-testid$="-follow"], [data-testid$="-unfollow"]');
       const target = followButton?.parentElement || cell.firstElementChild || cell;
@@ -243,7 +254,7 @@
       await chrome.runtime.sendMessage({
         type: "RECORD_MUTE",
         handle,
-        source: "queue",
+        source: message.source || "queue",
         viewer: detectViewer()
       });
       return result;

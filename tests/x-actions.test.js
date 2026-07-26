@@ -2,6 +2,17 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const Actions = require("../src/shared/core.js");
 
+test("user cells route mute through a temporary profile tab", () => {
+  assert.equal(Actions.muteExecutionMode("cell"), "profile-tab");
+  assert.equal(Actions.muteExecutionMode("tweet"), "inline-menu");
+  assert.equal(Actions.muteExecutionMode("profile"), "inline-menu");
+});
+
+test("mute buttons are not offered for the signed-in account", () => {
+  assert.equal(Actions.shouldOfferMute("timerringX", "@timerringx"), false);
+  assert.equal(Actions.shouldOfferMute("timerringX", "@someone_else"), true);
+});
+
 test("profile actions never fall back to a tweet caret", () => {
   const profileMenu = {};
   const root = {

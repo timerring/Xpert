@@ -110,6 +110,15 @@
     }));
   }
 
+  function muteExecutionMode(surface) {
+    return surface === "cell" ? "profile-tab" : "inline-menu";
+  }
+
+  function shouldOfferMute(viewer, target) {
+    const normalizedTarget = normalizeHandle(target);
+    return Boolean(normalizedTarget && normalizeHandle(viewer) !== normalizedTarget);
+  }
+
   function findMenuButton(root, isProfile) {
     if (isProfile) {
       return root.querySelector('[data-testid="userActions"]');
@@ -143,8 +152,10 @@
     findMuteMenuItem,
     makeQueueItems,
     mergeSettings,
+    muteExecutionMode,
     normalizeHandle,
     parseHandles,
-    routePlacement
+    routePlacement,
+    shouldOfferMute
   };
 });
