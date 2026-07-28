@@ -60,6 +60,9 @@
     event.preventDefault();
     event.stopPropagation();
     const button = event.currentTarget;
+    const tweet = button.dataset.surface === "tweet"
+      ? button.closest('article[data-testid="tweet"]')
+      : null;
     button.disabled = true;
     try {
       await performDirectMute(button.dataset.handle, button.dataset.userId);
@@ -69,11 +72,27 @@
         source: "one-click",
         viewer: detectViewer()
       });
-      button.remove();
+      if (tweet) {
+        dismissMutedTweet(tweet);
+      } else {
+        button.remove();
+      }
     } catch (error) {
       button.disabled = false;
       showToast(`Action failed: ${error.message}`, true);
     }
+  }
+
+  function dismissMutedTweet(tweet) {
+    let removed = false;
+    const remove = () => {
+      if (removed) return;
+      removed = true;
+      tweet.remove();
+    };
+    tweet.addEventListener("transitionend", remove, { once: true });
+    requestAnimationFrame(() => tweet.classList.add("xm-muted-dismiss"));
+    setTimeout(remove, 240);
   }
 
   async function performDirectMute(handle, userId) {
@@ -185,21 +204,53 @@
     }).observe(document.body, { childList: true, subtree: true });
   }
 
+  function syncShortcutToNativeStack(shortcut) {
+    const nativeButtons = [...document.querySelectorAll(
+      '[data-testid="GrokDrawerHeader"], [data-testid="chat-drawer-main"]'
+    )];
+    const nativeRects = nativeButtons.map((button) => button.getBoundingClientRect());
+    const anchorRect = Core.topmostRect(nativeRects);
+    if (!anchorRect) {
+      shortcut.removeAttribute("style");
+      return;
+    }
+    const geometry = Core.shortcutGeometry(anchorRect, {
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+    if (!geometry) return;
+
+    const styleSource = nativeButtons[nativeRects.indexOf(anchorRect)];
+    const nativeStyle = getComputedStyle(styleSource);
+    shortcut.style.width = `${geometry.width}px`;
+    shortcut.style.height = `${geometry.height}px`;
+    shortcut.style.right = `${geometry.right}px`;
+    shortcut.style.bottom = `${geometry.bottom}px`;
+    shortcut.style.setProperty("--xm-shortcut-icon-size", `${geometry.iconSize}px`);
+    shortcut.style.background = nativeStyle.background;
+    shortcut.style.border = nativeStyle.border;
+    shortcut.style.borderRadius = nativeStyle.borderRadius;
+    shortcut.style.boxShadow = nativeStyle.boxShadow;
+    shortcut.style.color = nativeStyle.color;
+  }
+
   function updateShortcut() {
     let shortcut = document.querySelector(".xm-settings-shortcut");
     if (!settings.showShortcut) {
       shortcut?.remove();
       return;
     }
-    if (shortcut) return;
-    shortcut = document.createElement("button");
-    shortcut.type = "button";
-    shortcut.className = "xm-settings-shortcut";
-    shortcut.title = "Open X One Click Mute Control Center";
-    shortcut.setAttribute("aria-label", shortcut.title);
-    shortcut.innerHTML = ICONS.settings;
-    shortcut.addEventListener("click", () => chrome.runtime.sendMessage({ type: "OPEN_OPTIONS" }));
-    document.body.append(shortcut);
+    if (!shortcut) {
+      shortcut = document.createElement("button");
+      shortcut.type = "button";
+      shortcut.className = "xm-settings-shortcut";
+      shortcut.title = "Open X One Click Mute Control Center";
+      shortcut.setAttribute("aria-label", shortcut.title);
+      shortcut.innerHTML = ICONS.settings;
+      shortcut.addEventListener("click", () => chrome.runtime.sendMessage({ type: "OPEN_OPTIONS" }));
+      document.body.append(shortcut);
+    }
+    syncShortcutToNativeStack(shortcut);
   }
 
   function scan() {
@@ -266,6 +317,7 @@
     settings = state.settings;
     scan();
     new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("resize", scan);
     chrome.runtime.sendMessage({ type: "CONTENT_READY" }).catch(() => {});
   });
 })();
