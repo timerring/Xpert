@@ -56,28 +56,36 @@
   margin-right: 8px;
 }
 
+.xm-muted-dismiss {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
 .xm-settings-shortcut {
+  --xm-shortcut-icon-size: 32px;
   align-items: center;
-  background: rgb(15, 20, 25);
-  border: 0;
-  border-radius: 9999px;
-  bottom: 22px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, .22);
-  color: white;
+  background: rgba(255, 255, 255, .85);
+  border: 1px solid rgb(159, 181, 195);
+  border-radius: 16px;
+  bottom: 20px;
+  box-shadow: 0 0 15px rgba(101, 119, 134, .2), 0 0 3px 1px rgba(101, 119, 134, .15);
+  color: rgb(15, 20, 25);
   cursor: pointer;
   display: flex;
-  height: 42px;
+  height: 55px;
   justify-content: center;
+  padding: 0;
   position: fixed;
-  right: 22px;
-  width: 42px;
+  right: 36px;
+  width: 55px;
   z-index: 9999;
 }
 
 .xm-settings-shortcut svg {
   fill: currentColor;
-  height: 21px;
-  width: 21px;
+  height: var(--xm-shortcut-icon-size);
+  width: var(--xm-shortcut-icon-size);
 }
 
 .xm-toast {
@@ -101,9 +109,10 @@
     border-color: rgb(83, 100, 113);
     color: rgb(231, 233, 234);
   }
+}
 
-  .xm-settings-shortcut {
-    background: rgb(239, 243, 244);
-    color: rgb(15, 20, 25);
+@media (prefers-reduced-motion: reduce) {
+  .xm-muted-dismiss {
+    transition-duration: 0s;
   }
 }

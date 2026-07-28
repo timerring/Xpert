@@ -140,6 +140,27 @@
     return "";
   }
 
+  function shortcutGeometry(anchorRect, viewport, gap = 12) {
+    const width = Math.round(Number(anchorRect?.width) || 0);
+    const height = Math.round(Number(anchorRect?.height) || 0);
+    const viewportWidth = Number(viewport?.width) || 0;
+    const viewportHeight = Number(viewport?.height) || 0;
+    if (!width || !height || !viewportWidth || !viewportHeight) return null;
+    return {
+      bottom: Math.max(12, Math.round(viewportHeight - Number(anchorRect.top) + gap)),
+      height,
+      iconSize: Math.round(Math.min(width, height) * 32 / 55),
+      right: Math.max(12, Math.round(viewportWidth - Number(anchorRect.right))),
+      width
+    };
+  }
+
+  function topmostRect(rects) {
+    return (Array.isArray(rects) ? rects : [])
+      .filter((rect) => Number(rect?.width) > 0 && Number(rect?.height) > 0)
+      .reduce((topmost, rect) => !topmost || Number(rect.top) < Number(topmost.top) ? rect : topmost, null);
+  }
+
   return {
     DEFAULT_SETTINGS,
     PLACEMENTS,
@@ -151,6 +172,8 @@
     parseHandles,
     readCookie,
     routePlacement,
-    shouldOfferMute
+    shortcutGeometry,
+    shouldOfferMute,
+    topmostRect
   };
 });
