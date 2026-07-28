@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "X One Click Mute",
   "description": "Mute accounts on X with one click, including bulk queues and a local mute ledger.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "permissions": [
     "alarms",
     "storage",
