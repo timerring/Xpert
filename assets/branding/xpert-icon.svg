@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-labelledby="title desc">
+  <title id="title">Xpert icon</title>
+  <desc id="desc">The X mark in white on a Twitter-blue rounded-square background.</desc>
+
+  <rect width="24" height="24" rx="5.25" fill="#1D9BF0"/>
+  <path
+    fill="#fff"
+    d="M17.51 4H20l-5.44 6.22L20.96 18h-5.01l-3.92-5.13L7.54 18H5.05l5.82-6.65L4.73 4h5.14l3.55 4.69L17.51 4Zm-.87 12.63h1.38L9.12 5.3H7.64l9 11.33Z"
+    transform="translate(-0.85 1)"
+  />
+</svg>

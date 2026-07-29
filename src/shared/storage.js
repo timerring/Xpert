@@ -112,7 +112,7 @@
   async function exportData() {
     const state = await getState();
     return {
-      app: "X One Click Mute",
+      app: "Xpert",
       exportedAt: new Date().toISOString(),
       version: 2,
       state
