@@ -2,6 +2,8 @@
 
 An independently implemented Chrome Manifest V3 extension that adds one-click Mute buttons to posts, user lists, and profiles on X (Twitter), with bulk queues, a local mute ledger, statistics, and backups.
 
+See the [Privacy Policy](PRIVACY.md) for details about local data handling and X requests.
+
 ## Features
 
 - Injects one-click buttons into timelines, search results, follower/following lists, notifications, hashtags, communities, engagement lists, and profiles
