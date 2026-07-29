@@ -244,7 +244,7 @@
       shortcut = document.createElement("button");
       shortcut.type = "button";
       shortcut.className = "xm-settings-shortcut";
-      shortcut.title = "Open X One Click Mute Control Center";
+      shortcut.title = "Open Xpert Control Center";
       shortcut.setAttribute("aria-label", shortcut.title);
       shortcut.innerHTML = ICONS.settings;
       shortcut.addEventListener("click", () => chrome.runtime.sendMessage({ type: "OPEN_OPTIONS" }));

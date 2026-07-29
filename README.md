@@ -1,4 +1,4 @@
-# X One Click Mute
+# Xpert
 
 An independently implemented Chrome Manifest V3 extension that adds one-click Mute buttons to posts, user lists, and profiles on X (Twitter), with bulk queues, a local mute ledger, statistics, and backups.
 
