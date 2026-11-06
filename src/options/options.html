@@ -6,6 +6,7 @@
   <title>Xpert Control Center</title>
   <link rel="stylesheet" href="options.css">
   <link rel="stylesheet" href="keywords.css">
+  <link rel="stylesheet" href="posts.css">
 </head>
 <body>
   <div class="shell">
@@ -19,6 +20,7 @@
         <button class="nav-item" data-view="queue">Bulk Queue <span id="queue-badge"></span></button>
         <button class="nav-item" data-view="ledger">Mute Ledger</button>
         <button class="nav-item" data-view="keywords">Muted Words</button>
+        <button class="nav-item" data-view="posts">My Posts</button>
         <button class="nav-item" data-view="settings">Settings</button>
         <button class="nav-item" data-view="backup">Backup & Restore</button>
       </nav>
@@ -31,6 +33,7 @@
           <p class="eyebrow">Current X account</p>
           <select id="viewer-select" aria-label="Current X account"></select>
         </div>
+        <div class="posts-viewer"><p class="eyebrow">Local post archive</p><strong id="posts-toolbar-owner">Choose an archive</strong></div>
         <div class="keyword-viewer"><p class="eyebrow">Connected X account</p><strong id="kw-toolbar-viewer">Connect to X</strong></div>
         <a class="open-x" href="https://x.com/timerringX" target="_blank" rel="noreferrer">Open X ↗</a>
       </header>
@@ -158,6 +161,61 @@
         </article>
       </section>
 
+      <section class="view" id="view-posts" aria-labelledby="posts-title">
+        <div class="heading"><div><p class="eyebrow">Your archive</p><h1 id="posts-title">My Posts</h1></div></div>
+        <p class="posts-intro">Import your X archive, find posts by date or words, and save the results. Your library stays in this browser.</p>
+        <p id="posts-notice" class="posts-notice" role="status" aria-live="polite" hidden></p>
+        <article class="panel" aria-labelledby="posts-import-title">
+          <h2 id="posts-import-title">Import an archive</h2>
+          <p>Choose the ZIP you downloaded from X, its extracted folder, or account.js together with every tweets file. You can also restore a My Posts JSON export.</p>
+          <div class="posts-actions posts-import-actions">
+            <button class="button primary" type="button" id="posts-choose-files">Choose ZIP / files</button>
+            <button class="button ghost" type="button" id="posts-choose-folder">Choose extracted folder</button>
+            <a class="posts-help-link" href="https://help.x.com/en/managing-your-account/how-to-download-your-x-archive" target="_blank" rel="noreferrer">Get your X archive ↗</a>
+          </div>
+          <input id="posts-files" type="file" accept=".zip,.js,.json" multiple hidden>
+          <input id="posts-folder" type="file" webkitdirectory multiple hidden>
+          <p class="hint">Only post data and account identity are imported. Images and videos remain links; keep your original archive for the media files.</p>
+          <div id="posts-progress-panel" hidden><p id="posts-progress-label" role="status"></p><progress id="posts-progress" aria-label="Archive import progress"></progress></div>
+          <section id="posts-preview" class="posts-review" aria-labelledby="posts-preview-title" hidden>
+            <h3 id="posts-preview-title">Review your import</h3>
+            <p id="posts-preview-summary"></p><p id="posts-preview-range"></p>
+            <ul id="posts-preview-issues"></ul>
+            <p class="hint">Import merges matching post IDs. Date and search filters below affect browsing and exports; the import saves every valid post in these files.</p>
+            <div class="posts-actions"><button class="button ghost" type="button" id="posts-cancel-import">Cancel</button><button class="button primary" type="button" id="posts-confirm-import">Import into My Posts</button></div>
+          </section>
+        </article>
+        <article class="panel" aria-labelledby="posts-library-title">
+          <div class="posts-section-heading"><div><h2 id="posts-library-title">Your saved posts</h2><p id="posts-library-summary">Loading your local library…</p></div><button class="button ghost" type="button" id="posts-refresh">Refresh library</button></div>
+          <p id="posts-library-range"></p>
+          <details id="posts-import-history" hidden><summary>Recent import reports</summary><div id="posts-import-reports"></div></details>
+          <p class="posts-coverage">This library contains posts found in your imported files. Its date span describes the saved posts; completeness of that period is unverified.</p>
+          <div class="posts-filter-grid">
+            <label for="posts-start">From date<input id="posts-start" type="date"></label>
+            <label for="posts-end">Through date<input id="posts-end" type="date"></label>
+            <label for="posts-timezone">Time zone<select id="posts-timezone"><option value="local">Device time zone</option><option value="utc">UTC</option></select></label>
+            <label class="posts-search-label" for="posts-search">Search saved text<input id="posts-search" type="search" placeholder="Word or exact phrase" autocomplete="off"></label>
+          </div>
+          <p class="hint" id="posts-timezone-hint"></p>
+          <fieldset class="posts-types"><legend>Post types</legend>
+            <label><input type="checkbox" data-post-type="original" checked> Original</label>
+            <label><input type="checkbox" data-post-type="reply" checked> Replies</label>
+            <label><input type="checkbox" data-post-type="quote" checked> Quotes</label>
+            <label><input type="checkbox" data-post-type="repost"> Reposts</label>
+          </fieldset>
+          <p id="posts-filter-error" class="posts-notice posts-error" role="status" hidden></p>
+          <div class="posts-result-tools"><p id="posts-result-count" aria-live="polite">0 matching posts</p><div class="posts-actions"><button class="button ghost" type="button" id="posts-reset-filters">Reset filters</button><button class="button primary" type="button" id="posts-export-json" disabled>Export JSON</button><button class="button ghost" type="button" id="posts-export-markdown" disabled>Export Markdown</button></div></div>
+          <p class="hint posts-export-hint">Exports include every matching post across all pages. JSON can be imported again; Markdown is for reading.</p>
+          <div id="posts-results" class="posts-empty">Import an archive to build your local library.</div>
+          <div class="posts-pagination"><button class="button ghost" type="button" id="posts-prev" disabled>Previous</button><span id="posts-page-label">Page 1 of 1</span><button class="button ghost" type="button" id="posts-next" disabled>Next</button></div>
+        </article>
+        <article class="panel posts-library-actions">
+          <div><h2>Manage this local library</h2><p>My Posts has its own exports. Your mute ledger backup is managed separately in Backup &amp; Restore.</p></div>
+          <button class="button danger-button" type="button" id="posts-clear" disabled>Clear My Posts</button>
+          <section id="posts-clear-review" class="posts-review" aria-labelledby="posts-clear-title" hidden><h3 id="posts-clear-title">Clear this local post library?</h3><p id="posts-clear-summary"></p><p>Your posts on X and your downloaded archive files stay in place.</p><div class="posts-actions"><button class="button ghost" type="button" id="posts-clear-cancel">Keep library</button><button class="button danger-button" type="button" id="posts-clear-confirm">Clear local library</button></div></section>
+        </article>
+      </section>
+
       <section class="view" id="view-settings">
         <div class="heading">
           <div><p class="eyebrow">Preferences</p><h1>Settings</h1></div>
@@ -191,7 +249,7 @@
         </div>
         <div class="backup-grid">
           <article class="panel">
-            <h2>Export Full Backup</h2><p>Includes Mute ledgers for all accounts, settings, queue, and run history.</p>
+            <h2>Export Mute &amp; Settings Backup</h2><p>Includes mute ledgers, settings, account queue, and run history. Export your saved posts separately in My Posts.</p>
             <button id="export-data" class="button primary">Download JSON Backup</button>
           </article>
           <article class="panel">
@@ -220,5 +278,9 @@
   <script src="../shared/keywords.js"></script>
   <script src="options.js"></script>
   <script src="keywords.js"></script>
+  <script src="../shared/posts.js"></script>
+  <script src="../shared/archive-reader.js"></script>
+  <script src="../shared/post-store.js"></script>
+  <script src="posts.js"></script>
 </body>
 </html>

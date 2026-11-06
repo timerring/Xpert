@@ -2,7 +2,7 @@
 
 **Effective date:** November 7, 2026
 
-Xpert is a Chrome extension that adds quick actions and bulk controls for muting accounts and words on X. This Privacy Policy explains what data Xpert handles, why it is needed, where it is stored, and the choices available to users.
+Xpert is a Chrome extension that adds controls for muting accounts and words on X and a local library of the user's own posts. This Privacy Policy explains what data Xpert handles, why it is needed, where it is stored, and the choices available to users.
 
 Xpert is an independent project and is not affiliated with, endorsed by, or sponsored by X Corp.
 
@@ -16,6 +16,7 @@ Xpert handles only the data needed to provide its user-facing muting and local r
 - **User activity related to Xpert:** requested mute actions, timestamps, action sources, bulk queue status, and bulk run history.
 - **Extension settings and user-provided data:** button-placement preferences, queue delay settings, and X handles or X links entered or imported by the user.
 - **Muted words:** words or phrases entered by the user, text explicitly selected within a post for a muted-word draft, the native muted-word list returned by X, scope and duration choices, and local batch progress. Selected text is processed locally until the user chooses to add the word on X.
+- **Imported post archives:** account identifiers and profile labels, post identifiers, full text, timestamps, post types, reply and quote references, media links, and import reports from files explicitly selected by the user in **My Posts**. The importer reads supported account and post data files. Other archive sections, including Direct Messages and address books, are excluded from the post library.
 
 Xpert does not collect health information, financial or payment information, precise location, or personal communications.
 
@@ -31,6 +32,8 @@ Xpert uses this data only to:
 - apply the user's extension settings; and
 - export or restore a backup when the user requests it.
 
+**My Posts** uses locally imported post data to provide date and type filters, literal text search, and JSON / Markdown exports. These operations run on the user's device.
+
 Xpert does not use data for advertising, profiling, creditworthiness, lending, or purposes unrelated to its single purpose.
 
 ## Storage and Retention
@@ -42,6 +45,8 @@ The current muted-word batch, its target account, options, and per-word results 
 The developer does not operate a server that receives or stores this extension data. Local account records and settings remain until cleared in **Backup & Restore**. Keyword batch records remain until replaced or cleared in **Muted Words**. Clearing the extension's storage or uninstalling it removes all of these local records.
 
 When the user downloads a JSON backup, the file is created locally and is controlled by the user. Xpert does not upload backup files to the developer.
+
+**My Posts** stores its account, posts, and recent import reports in a separate IndexedDB database on the device. **Clear local post library** removes this database's records. Its JSON / Markdown exports are generated locally; the account-ledger backup remains separate. Original image and video files stay in the user's downloaded X archive, while My Posts stores media links. Clearing extension data or uninstalling the extension removes the local post library; downloaded export files remain under the user's control.
 
 ## Data Transmission and Sharing
 
@@ -58,6 +63,8 @@ Xpert does not:
 - allow the developer or other humans to read locally stored extension data.
 
 ## Permissions
+
+My Posts imports, filters, searches, and exports local files on the device. Opening a post or media link navigates to its external site through the user's browser.
 
 Xpert uses the following Chrome permissions:
 
