@@ -26,6 +26,10 @@
   opacity: .55;
 }
 
+.xm-one-click[hidden], .xm-muted-hidden {
+  display: none !important;
+}
+
 .xm-one-click svg {
   fill: currentColor;
   height: 18px;
@@ -93,21 +97,53 @@
   width: var(--xm-shortcut-icon-size);
 }
 
-.xm-toast {
-  background: rgb(29, 155, 240);
-  border-radius: 6px;
+.xm-toast-region {
   bottom: 26px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, .25);
-  color: white;
-  font: 600 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
   left: 50%;
-  max-width: min(460px, calc(100vw - 32px));
-  padding: 12px 18px;
+  /* Percentages follow the fixed viewport after page CSS zoom is applied. */
+  max-height: calc(100% - 42px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   position: fixed;
-  text-align: center;
   transform: translateX(-50%);
+  width: min(460px, calc(100% - 32px));
   z-index: 2147483647;
 }
+
+.xm-toast {
+  align-items: center;
+  background: rgb(29, 155, 240);
+  border-radius: 6px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, .25);
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  font: 600 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  gap: 12px;
+  justify-content: space-between;
+  overflow-wrap: anywhere;
+  padding: 12px 18px;
+}
+
+.xm-toast span { min-width: 0; }
+.xm-toast--error { background: rgb(185, 28, 48); }
+.xm-toast button {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 9999px;
+  color: inherit;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  min-height: 36px;
+  padding: 5px 12px;
+}
+.xm-toast button:hover { background: rgba(255, 255, 255, .15); }
+.xm-toast button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.xm-toast button:disabled { cursor: progress; opacity: .65; }
 
 @media (prefers-color-scheme: dark) {
   .xm-one-click--profile {

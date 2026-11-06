@@ -2,6 +2,7 @@
   "use strict";
 
   const Core = root.XMuteCore;
+  let pendingWrite = Promise.resolve();
   const EMPTY_STATE = {
     version: 2,
     currentViewer: "default",
@@ -47,16 +48,28 @@
     return normalizeState(result.state);
   }
 
-  async function saveState(state) {
+  function serializeWrite(action) {
+    const operation = pendingWrite.then(action);
+    pendingWrite = operation.catch(() => {});
+    return operation;
+  }
+
+  async function persistState(state) {
     const normalized = normalizeState(state);
     await chrome.storage.local.set({ state: normalized });
     return normalized;
   }
 
-  async function update(mutator) {
-    const state = await getState();
-    const result = await mutator(state);
-    return saveState(result || state);
+  function saveState(state) {
+    return serializeWrite(() => persistState(state));
+  }
+
+  function update(mutator) {
+    return serializeWrite(async () => {
+      const state = await getState();
+      const result = await mutator(state);
+      return persistState(result || state);
+    });
   }
 
   function ensureAccount(state, viewer) {
@@ -66,29 +79,59 @@
     return { account: state.accounts[key], key };
   }
 
-  async function setViewer(handle) {
+  function setViewer(handle) {
     const viewer = Core.normalizeHandle(handle);
-    if (!viewer) return getState();
-    const state = await getState();
-    if (state.currentViewer === viewer && state.accounts[viewer]) return state;
-    state.currentViewer = viewer;
-    ensureAccount(state, viewer);
-    return saveState(state);
+    return serializeWrite(async () => {
+      const state = await getState();
+      if (!viewer || (state.currentViewer === viewer && state.accounts[viewer])) return state;
+      state.currentViewer = viewer;
+      ensureAccount(state, viewer);
+      return persistState(state);
+    });
   }
 
-  async function recordMute(handle, source, viewer) {
+  async function recordMute(handle, source, viewer, userId) {
     const normalizedHandle = Core.normalizeHandle(handle);
     if (!normalizedHandle) throw new Error("Invalid X handle");
+    const normalizedUserId = /^\d+$/.test(String(userId || "")) ? String(userId) : "";
     return update((state) => {
       const { account } = ensureAccount(state, viewer || state.currentViewer);
       const list = account.muted;
-      const existing = list.find((entry) => entry.handle === normalizedHandle);
+      const existing = list.find((entry) => entry.handle === normalizedHandle
+        || (normalizedUserId && entry.userId === normalizedUserId));
       if (existing) {
+        existing.handle = normalizedHandle;
         existing.timestamp = Date.now();
         existing.source = source || existing.source;
+        if (normalizedUserId) existing.userId = normalizedUserId;
       } else {
-        list.unshift({ handle: normalizedHandle, timestamp: Date.now(), source: source || "one-click" });
+        list.unshift({
+          handle: normalizedHandle,
+          timestamp: Date.now(),
+          source: source || "one-click",
+          ...(normalizedUserId ? { userId: normalizedUserId } : {})
+        });
       }
+    });
+  }
+
+  async function recordUnmute(handle, viewer, userId) {
+    const normalizedHandle = Core.normalizeHandle(handle);
+    if (!normalizedHandle) throw new Error("Invalid X handle");
+    const normalizedUserId = /^\d+$/.test(String(userId || "")) ? String(userId) : "";
+    return update((state) => {
+      const { account } = ensureAccount(state, viewer || state.currentViewer);
+      account.muted = account.muted.filter((entry) => normalizedUserId && entry.userId
+        ? entry.userId !== normalizedUserId
+        : entry.handle !== normalizedHandle);
+    });
+  }
+
+  function clearLocalData(kind) {
+    if (!["muted", "settings"].includes(kind)) throw new Error("Choose muted or settings data to clear");
+    return update((state) => {
+      if (kind === "settings") state.settings = Core.mergeSettings();
+      else Object.values(state.accounts).forEach((account) => { account.muted = []; });
     });
   }
 
@@ -137,19 +180,26 @@
       const handle = Core.normalizeHandle(entry?.handle);
       if (!handle) continue;
       const previous = map.get(handle);
-      if (!previous || Number(entry.timestamp) > Number(previous.timestamp)) map.set(handle, { ...entry, handle });
+      if (!previous || Number(entry.timestamp) > Number(previous.timestamp)) {
+        const normalized = { ...entry, handle };
+        if (/^\d+$/.test(String(entry.userId || ""))) normalized.userId = String(entry.userId);
+        else delete normalized.userId;
+        map.set(handle, normalized);
+      }
     }
     return [...map.values()].sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
   }
 
   root.XMuteStorage = {
     addQueue,
+    clearLocalData,
     clearQueue,
     exportData,
     getState,
     importData,
     normalizeState,
     recordMute,
+    recordUnmute,
     saveState,
     setViewer,
     update

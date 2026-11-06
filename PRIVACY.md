@@ -1,6 +1,6 @@
 # Xpert Privacy Policy
 
-**Effective date:** July 30, 2026
+**Effective date:** November 6, 2026
 
 Xpert is a Chrome extension that adds one-click and bulk account muting controls to X. This Privacy Policy explains what data Xpert handles, why it is needed, where it is stored, and the choices available to users.
 
@@ -10,8 +10,8 @@ Xpert is an independent project and is not affiliated with, endorsed by, or spon
 
 Xpert handles only the data needed to provide its user-facing muting and local record-keeping features:
 
-- **X account identifiers:** X handles, the currently signed-in X handle, and numeric X user identifiers displayed on supported X pages or supplied by the user.
-- **Authentication information:** Xpert reads X's `ct0` CSRF token from the current X page only when performing a mute action requested by the user. The token is not saved in Xpert's local records or sent to the developer.
+- **X account identifiers:** X handles, the currently signed-in X handle, and numeric X user identifiers displayed on supported X pages, returned by X after a requested action, or supplied by the user. Numeric identifiers allow Unmute to target the same account after a handle change.
+- **Authentication information:** Xpert reads X's `ct0` CSRF token from the current X page only when performing a mute or unmute action requested by the user. The token is used for the request to X and is kept out of Xpert's local records.
 - **X page context and website content:** Xpert reads limited information from supported `x.com` and `twitter.com` pages, including the current route and account identifiers present in the page, to place Mute controls beside the correct accounts.
 - **User activity related to Xpert:** requested mute actions, timestamps, action sources, bulk queue status, and bulk run history.
 - **Extension settings and user-provided data:** button-placement preferences, queue delay settings, and X handles or X links entered or imported by the user.
@@ -23,7 +23,7 @@ Xpert does not collect health information, financial or payment information, pre
 Xpert uses this data only to:
 
 - display Mute controls on supported X pages;
-- send a mute request to X when the user explicitly requests it;
+- send a mute or unmute request to X when the user explicitly requests it;
 - process user-created bulk mute queues;
 - maintain a local mute ledger and run history;
 - apply the user's extension settings; and
@@ -33,7 +33,7 @@ Xpert does not use data for advertising, profiling, creditworthiness, lending, o
 
 ## Storage and Retention
 
-Settings, X handles, mute ledger entries, queue state, and run history are stored locally on the user's device using `chrome.storage.local`.
+Settings, X handles, numeric user identifiers, mute ledger entries, queue state, and run history are stored locally on the user's device using `chrome.storage.local`. A successful Unmute removes the corresponding mute ledger entry.
 
 The developer does not operate a server that receives or stores this extension data. Locally stored data remains until the user clears it in Xpert's **Backup & Restore** page, clears the extension's storage, or uninstalls the extension.
 
@@ -41,7 +41,7 @@ When the user downloads a JSON backup, the file is created locally and is contro
 
 ## Data Transmission and Sharing
 
-When the user requests a mute action, Xpert sends the required account identifier and X session authentication information directly to `https://x.com` over HTTPS. This transmission is necessary for X to perform the requested mute and is governed by X's own terms and privacy practices.
+When the user requests a mute or unmute action, Xpert sends the required account identifier and X session authentication information directly to `https://x.com` over HTTPS. This transmission is necessary for X to perform the requested action and is governed by X's own terms and privacy practices.
 
 Xpert does not:
 
@@ -57,7 +57,7 @@ Xpert uses the following Chrome permissions:
 
 - **`storage`:** stores settings, user-provided account handles, queue state, run history, and the mute ledger locally.
 - **`alarms`:** schedules the next item in a user-started bulk mute queue so processing can continue when the extension service worker is suspended.
-- **Host access to `x.com` and `twitter.com`:** places Mute controls on supported X pages, identifies the relevant X account, and performs mute actions explicitly requested by the user.
+- **Host access to `x.com` and `twitter.com`:** places Mute controls on supported X pages, identifies the relevant X account, and performs mute or unmute actions explicitly requested by the user.
 
 Xpert does not download or execute remotely hosted JavaScript or WebAssembly.
 
@@ -66,6 +66,7 @@ Xpert does not download or execute remotely hosted JavaScript or WebAssembly.
 Users can:
 
 - choose where Xpert displays Mute controls;
+- undo a recent mute or unmute an account from the local ledger;
 - stop bulk queue processing and clear completed queue items;
 - export a local JSON backup;
 - clear the local mute ledger;
