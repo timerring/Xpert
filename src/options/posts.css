@@ -1,0 +1,98 @@
+.posts-viewer { display: none; min-width: 0; }
+.posts-active { min-width: 0; }
+.posts-active .brand > div { min-width: 0; overflow-wrap: anywhere; }
+.posts-active .nav-item { overflow-wrap: anywhere; min-width: 0; }
+.posts-active .local-viewer, .posts-active .keyword-viewer { display: none; }
+.posts-active .posts-viewer { display: block; }
+.posts-active .nav-item span:empty { display: none; }
+.posts-viewer strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+#view-posts [hidden] { display: none !important; }
+#view-posts .heading { margin-bottom: 12px; }
+.posts-intro { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0 0 22px; max-width: 760px; }
+.posts-notice { background: #edf6ff; border: 1px solid #bfdef3; border-radius: 8px; color: #185983; font-size: 13px; line-height: 1.6; margin: 0 0 18px; overflow-wrap: anywhere; padding: 12px 14px; }
+.posts-notice.posts-error { background: #fff3f4; border-color: #ffd8dc; color: #a61d2f; }
+.posts-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.posts-import-actions { justify-content: flex-start; }
+#view-posts .button { min-height: 40px; overflow-wrap: anywhere; }
+.posts-help-link { color: #21638d; font-size: 12px; line-height: 1.5; padding: 8px 0; }
+#posts-progress-panel { margin-top: 18px; }
+#posts-progress-label { overflow-wrap: anywhere; margin: 0 0 8px; }
+#posts-progress { accent-color: var(--blue); display: block; height: 10px; width: 100%; }
+.posts-review { background: #f8fafb; border: 1px solid var(--border); border-radius: 10px; margin: 20px 0 0; padding: 18px; }
+.posts-review h3 { font-size: 14px; margin: 0 0 8px; }
+.posts-review p { margin-bottom: 12px; overflow-wrap: anywhere; }
+.posts-review .hint { margin-bottom: 16px !important; }
+#posts-preview-issues { background: #fff9e9; border-radius: 6px; color: #7c590c; font-size: 12px; line-height: 1.6; margin: 12px 0; max-height: 240px; overflow: auto; padding: 12px 12px 12px 28px; }
+#posts-preview-issues li { overflow-wrap: anywhere; }
+.posts-section-heading { align-items: start; display: flex; gap: 16px; justify-content: space-between; margin-bottom: 12px; }
+.posts-section-heading > div { min-width: 0; }
+.posts-section-heading p { margin: 4px 0 0; overflow-wrap: anywhere; }
+.posts-section-heading .button { flex-shrink: 0; }
+#posts-library-range { margin: 0 0 8px; overflow-wrap: anywhere; }
+#view-posts .posts-coverage { border-left: 2px solid #b6c5d1; font-size: 12px; padding: 3px 0 3px 12px; }
+#posts-import-history { color: var(--muted); font-size: 12px; margin: 0 0 16px; }
+#posts-import-history summary { cursor: pointer; padding: 6px 0; }
+#posts-import-reports { max-height: 260px; overflow: auto; }
+.posts-import-report { border-top: 1px solid var(--border); padding: 10px 0; overflow-wrap: anywhere; }
+#view-posts .posts-import-report p { font-size: 12px; margin: 0; }
+.posts-import-report ul { line-height: 1.5; margin: 6px 0 0; padding-left: 20px; }
+#view-posts .posts-partial { color: #8e6711; font-size: 11px; margin: 0 0 10px; }
+.posts-filter-grid { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.posts-filter-grid label { display: grid; font-size: 12px; gap: 7px; min-width: 0; }
+.posts-filter-grid input, .posts-filter-grid select { background: white; border: 1px solid #d9dee3; border-radius: 8px; color: var(--ink); display: block; font-size: 13px; min-height: 40px; min-width: 0; padding: 9px 11px; width: 100%; }
+.posts-filter-grid input:focus, .posts-filter-grid select:focus { border-color: #77838e; outline: 2px solid #d9e9f3; outline-offset: 1px; }
+.posts-search-label { grid-column: 1 / -1; }
+.posts-types { align-items: center; border: 0; display: flex; flex-wrap: wrap; gap: 12px 18px; margin: 16px 0; padding: 0; }
+.posts-types legend { float: left; font-size: 12px; font-weight: 700; margin: 0 16px 0 0; }
+.posts-types label { align-items: center; display: flex; font-size: 12px; font-weight: 500; gap: 6px; }
+.posts-types input { accent-color: var(--primary); height: 16px; margin: 0; width: 16px; }
+.posts-result-tools { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-top: 22px; }
+#posts-result-count { font-weight: 700; margin: 0; }
+#view-posts .posts-export-hint { margin: 10px 0 18px !important; }
+.posts-empty { border: 1px dashed #d7dde2; border-radius: 8px; color: var(--muted); font-size: 13px; line-height: 1.6; padding: 30px 16px; text-align: center; }
+.posts-card { border-top: 1px solid var(--border); padding: 20px 0; }
+.posts-card-heading { align-items: center; display: flex; flex-wrap: wrap; font-size: 11px; gap: 8px 12px; margin-bottom: 12px; }
+.posts-type { background: #eef2f5; border-radius: 99px; color: #4d606f; font-size: 10px; font-weight: 700; padding: 4px 8px; }
+.posts-type-original { background: #edf4ff; color: #2866a6; }
+.posts-date { color: var(--muted); }
+.posts-source-link { color: #21638d; margin-left: auto; text-decoration: none; }
+#view-posts .posts-text { color: var(--ink); font-size: 14px; line-height: 1.7; margin: 0 0 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
+#view-posts .posts-relations, #view-posts .posts-record-meta { font-size: 11px; margin: 8px 0 0; overflow-wrap: anywhere; }
+.posts-media-links { align-items: center; display: flex; flex-wrap: wrap; font-size: 12px; gap: 8px 14px; margin: 14px 0; }
+.posts-media-links a { color: #21638d; }
+.posts-media-links span { color: var(--muted); font-size: 11px; width: 100%; }
+.posts-pagination { align-items: center; display: flex; font-size: 12px; gap: 12px; justify-content: center; margin-top: 22px; }
+.posts-library-actions { display: flex; flex-wrap: wrap; gap: 12px 18px; justify-content: space-between; }
+.posts-library-actions > div { flex: 1 1 420px; }
+.posts-library-actions > div p { margin: 0; }
+.posts-library-actions > .button { align-self: start; }
+#posts-clear-review { background: #fff8f8; border-color: #f3d8dc; margin-top: 0; width: 100%; }
+
+@media (max-width: 1100px) {
+  .posts-active .view { padding-left: 24px; padding-right: 24px; }
+}
+@media (max-width: 900px) {
+  .posts-active .shell { grid-template-columns: minmax(0, 1fr); }
+  .posts-active .sidebar { padding: 16px; }
+  .posts-active .brand { margin: 0 0 14px; }
+  .posts-active .sidebar nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .posts-active .nav-item { font-size: 12px; padding: 10px 8px; text-align: center; }
+  .posts-active .local-note { display: none; }
+  .posts-active .topbar { flex-wrap: wrap; gap: 12px; height: auto; min-height: 70px; padding: 12px 20px; }
+  .posts-active .open-x { flex: 0 0 auto; }
+  .posts-active .view { padding: 24px 20px 48px; }
+}
+@media (max-width: 560px) {
+  .posts-active .view { padding: 22px 12px 40px; }
+  #view-posts .panel { padding: 16px; }
+  .posts-review { padding: 12px; }
+  .posts-section-heading { align-items: stretch; flex-direction: column; gap: 10px; }
+  .posts-section-heading .button { align-self: start; }
+  .posts-filter-grid { grid-template-columns: minmax(0, 1fr); }
+  .posts-actions { justify-content: flex-start; }
+  .posts-actions .button { flex: 1 1 auto; min-width: 0; }
+  .posts-pagination { gap: 8px; }
+  .posts-pagination .button { padding-left: 10px; padding-right: 10px; }
+  .posts-card-heading { gap: 8px; }
+  .posts-source-link { margin-left: 0; }
+}
