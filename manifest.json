@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Xpert",
-  "description": "Mute accounts on X with one click, including bulk queues and a local mute ledger.",
-  "version": "0.2.3",
+  "description": "Mute accounts on X with one click, undo accidental mutes, and manage bulk queues and a local mute ledger.",
+  "version": "0.2.4",
   "permissions": [
     "alarms",
     "storage"

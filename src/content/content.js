@@ -10,6 +10,8 @@
   let lastPath = location.pathname;
   let shortcutFrame = null;
   let shortcutAnchors = null;
+  const pendingActions = new Set();
+  const dismissals = new WeakMap();
   const shortcutResizeObserver = new ResizeObserver(scheduleShortcutSync);
 
   function scheduleShortcutSync() {
@@ -80,51 +82,115 @@
     event.preventDefault();
     event.stopPropagation();
     const button = event.currentTarget;
-    const tweet = button.dataset.surface === "tweet"
-      ? button.closest('article[data-testid="tweet"]')
-      : null;
+    const handle = button.dataset.handle;
+    const viewer = detectViewer();
+    if (pendingActions.has(handle)) return;
+    pendingActions.add(handle);
     button.disabled = true;
     try {
-      await performDirectMute(button.dataset.handle, button.dataset.userId);
-      await chrome.runtime.sendMessage({
-        type: "RECORD_MUTE",
-        handle: button.dataset.handle,
-        source: "one-click",
-        viewer: detectViewer()
+      const result = await changeMute(handle, button.dataset.userId, "mute", viewer, "one-click");
+      dismissMutedContent(button);
+      clearUndoToasts(handle);
+      showToast(result.syncError
+        ? `Muted @${handle} on X. ${result.syncError}`
+        : `Muted @${handle}`, Boolean(result.syncError), {
+        label: "Undo",
+        duration: 10000,
+        handle,
+        run: async () => {
+          if (pendingActions.has(handle)) throw new Error(`An action for @${handle} is in progress`);
+          pendingActions.add(handle);
+          try {
+            const undone = await changeMute(handle, result.userId, "unmute", viewer);
+            restoreMutedContent(handle);
+            if (undone.syncError) throw new Error(`Unmuted @${handle} on X. ${undone.syncError}`);
+            clearUndoToasts(handle);
+            showToast(`Unmuted @${handle}`);
+          } finally {
+            pendingActions.delete(handle);
+          }
+        }
       });
-      if (tweet) {
-        dismissMutedTweet(tweet);
-      } else {
-        button.remove();
-      }
     } catch (error) {
       button.disabled = false;
       showToast(`Action failed: ${error.message}`, true);
+    } finally {
+      pendingActions.delete(handle);
     }
   }
 
-  function dismissMutedTweet(tweet) {
-    let removed = false;
-    const remove = () => {
-      if (removed) return;
-      removed = true;
-      tweet.remove();
-    };
-    tweet.addEventListener("transitionend", remove, { once: true });
-    requestAnimationFrame(() => tweet.classList.add("xm-muted-dismiss"));
-    setTimeout(remove, 240);
+  function dismissMutedContent(button) {
+    const tweet = button.dataset.surface === "tweet"
+      ? button.closest('article[data-testid="tweet"]') : null;
+    const element = tweet || button;
+    element.dataset.xmMutedHandle = button.dataset.handle;
+    if (!tweet) {
+      button.hidden = true;
+      return;
+    }
+    // Keep X's original node and listeners so Undo can restore the same post.
+    const frame = requestAnimationFrame(() => tweet.classList.add("xm-muted-dismiss"));
+    const timer = setTimeout(() => tweet.classList.add("xm-muted-hidden"), 240);
+    dismissals.set(tweet, { frame, timer });
   }
 
-  async function performDirectMute(handle, userId) {
+  function restoreMutedContent(handle) {
+    document.querySelectorAll("[data-xm-muted-handle]").forEach((element) => {
+      if (element.dataset.xmMutedHandle === handle) restoreMutedElement(element);
+    });
+  }
+
+  function restoreMutedElement(element) {
+    const dismissal = dismissals.get(element);
+    if (dismissal) {
+      cancelAnimationFrame(dismissal.frame);
+      clearTimeout(dismissal.timer);
+      dismissals.delete(element);
+    }
+    delete element.dataset.xmMutedHandle;
+    element.classList.remove("xm-muted-dismiss", "xm-muted-hidden");
+    element.hidden = false;
+    const button = element.matches(".xm-one-click") ? element : element.querySelector(".xm-one-click");
+    if (button) button.disabled = false;
+  }
+
+  async function message(type, payload) {
+    const response = await chrome.runtime.sendMessage({ type, ...payload });
+    if (!response?.ok) throw new Error(response?.error || "Extension storage is unavailable");
+    return response.result;
+  }
+
+  async function changeMute(handle, userId, action, viewer, source) {
+    const result = await performMuteRequest(handle, userId, action, viewer);
+    let syncError = "";
+    try {
+      await message(action === "mute" ? "RECORD_MUTE" : "RECORD_UNMUTE", {
+        handle, userId: result.userId, viewer, source
+      });
+    } catch {
+      syncError = "Local record update failed. Refresh Xpert to check your records.";
+    }
+    return { ...result, syncError };
+  }
+
+  async function performMuteRequest(handle, userId, action, expectedViewer) {
     const viewer = detectViewer();
-    if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error("You cannot mute your own account");
+    if (!viewer || !expectedViewer) {
+      throw new Error("Wait for your signed-in X profile to load, then try again");
+    }
+    if (viewer !== expectedViewer) {
+      throw new Error(`Sign in to X as @${expectedViewer}, then try again`);
+    }
+    if (viewer && viewer === Core.normalizeHandle(handle)) throw new Error(`Choose another account to ${action}`);
 
     const csrfToken = Core.readCookie(document.cookie, "ct0");
     if (!csrfToken) throw new Error("X session token is unavailable; refresh X and try again");
 
-    const response = await fetch("https://x.com/i/api/1.1/mutes/users/create.json", {
+    const endpoint = action === "mute" ? "create" : "destroy";
+    const response = await fetch(`https://x.com/i/api/1.1/mutes/users/${endpoint}.json`, {
       method: "POST",
       credentials: "include",
+      signal: AbortSignal.timeout(20000),
       headers: {
         authorization: `Bearer ${X_WEB_BEARER_TOKEN}`,
         "content-type": "application/x-www-form-urlencoded",
@@ -143,16 +209,27 @@
       } catch {
         // X may return an empty or non-JSON error response.
       }
-      throw new Error(detail || `X rejected the mute request (${response.status})`);
+      throw new Error(detail || `X rejected the ${action} request (${response.status})`);
     }
-    return { alreadyDone: false };
+    const payload = await response.json();
+    if (payload?.errors?.length || payload?.error || typeof payload?.muting === "boolean" && payload.muting !== (action === "mute")) {
+      throw new Error(payload?.errors?.[0]?.message || payload?.error || `X did not confirm the ${action}`);
+    }
+    const targetId = /^\d+$/.test(String(payload?.id_str || "")) ? payload.id_str : userId;
+    return { alreadyDone: false, userId: targetId || "" };
   }
 
   function injectTweetButtons() {
     const viewer = detectViewer();
     for (const article of document.querySelectorAll('article[data-testid="tweet"]')) {
-      if (article.dataset[MARKER]) continue;
       const handle = extractHandle(article);
+      // X can reuse a timeline node for a different author while scrolling.
+      if (handle && article.dataset.xmMutedHandle && article.dataset.xmMutedHandle !== handle) {
+        restoreMutedElement(article);
+        article.querySelectorAll(".xm-one-click").forEach((button) => button.remove());
+        delete article.dataset[MARKER];
+      }
+      if (article.dataset[MARKER]) continue;
       const menuButton = article.querySelector('button[data-testid="caret"]');
       if (!Core.shouldOfferMute(viewer, handle) || !menuButton?.parentElement) continue;
       article.dataset[MARKER] = "1";
@@ -314,32 +391,88 @@
       }
       updateShortcut();
       const viewer = detectViewer();
-      if (viewer) Store.setViewer(viewer).catch(() => {});
+      if (viewer) message("SET_VIEWER", { viewer }).catch(() => {});
     }, 80);
   }
 
-  function showToast(message, isError) {
-    document.querySelector(".xm-toast")?.remove();
+  function clearUndoToasts(handle) {
+    document.querySelectorAll(".xm-toast[data-handle]").forEach((toast) => {
+      if (toast.dataset.handle === handle) toast.remove();
+    });
+  }
+
+  function showToast(text, isError = false, action = null) {
+    let region = document.querySelector(".xm-toast-region");
+    if (!region) {
+      region = document.createElement("div");
+      region.className = "xm-toast-region";
+      document.body.append(region);
+    }
     const toast = document.createElement("div");
     toast.className = "xm-toast";
-    toast.textContent = message;
-    if (isError) toast.style.background = "rgb(244, 33, 46)";
-    document.body.append(toast);
-    setTimeout(() => toast.remove(), 3200);
+    toast.classList.toggle("xm-toast--error", isError);
+    const label = document.createElement("span");
+    label.setAttribute("role", "status");
+    label.textContent = text;
+    toast.append(label);
+    region.append(toast);
+    let timer;
+    let busy = false;
+    const startTimer = () => {
+      clearTimeout(timer);
+      if (busy || (action && toast.matches(":hover, :focus-within"))) return;
+      timer = setTimeout(() => toast.remove(), action?.duration || 3200);
+    };
+    if (action) {
+      toast.dataset.handle = action.handle;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = action.label;
+      button.setAttribute("aria-label", `Undo mute of @${action.handle}`);
+      button.addEventListener("click", async () => {
+        if (busy) return;
+        busy = true;
+        clearTimeout(timer);
+        button.disabled = true;
+        button.textContent = "Undoing…";
+        try {
+          await action.run();
+          toast.remove();
+        } catch (error) {
+          label.textContent = error.message;
+          toast.classList.add("xm-toast--error");
+          button.textContent = "Try again";
+          button.disabled = false;
+        } finally {
+          busy = false;
+          startTimer();
+        }
+      });
+      toast.append(button);
+      toast.addEventListener("mouseenter", () => clearTimeout(timer));
+      toast.addEventListener("focusin", () => clearTimeout(timer));
+      toast.addEventListener("mouseleave", startTimer);
+      toast.addEventListener("focusout", () => setTimeout(startTimer, 0));
+    }
+    startTimer();
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message?.type !== "PROCESS_PROFILE_MUTE") return undefined;
+    if (!["PROCESS_PROFILE_MUTE", "PROCESS_PROFILE_UNMUTE"].includes(message?.type)) return undefined;
     (async () => {
       const handle = Core.normalizeHandle(message.handle);
-      if (!handle || profileHandle() !== handle) throw new Error("The opened profile does not match the queued account");
-      const result = await performDirectMute(handle, message.userId);
-      await chrome.runtime.sendMessage({
-        type: "RECORD_MUTE",
-        handle,
-        source: message.source || "queue",
-        viewer: detectViewer()
-      });
+      const action = message.type === "PROCESS_PROFILE_UNMUTE" ? "unmute" : "mute";
+      if (!handle) throw new Error("Invalid X handle");
+      // X may hydrate the navigation after the tab's load event.
+      for (let attempt = 0; attempt < 20 && !detectViewer(); attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+      if (!/^\d+$/.test(String(message.userId || "")) && profileHandle() !== handle) {
+        throw new Error("The opened profile does not match the requested account");
+      }
+      const viewer = action === "unmute" ? message.viewer : detectViewer();
+      const result = await changeMute(handle, message.userId, action, viewer, message.source || "queue");
+      if (result.syncError) throw new Error(`${action === "mute" ? "Muted" : "Unmuted"} @${handle} on X. ${result.syncError}`);
       return result;
     })().then((result) => sendResponse({ ok: true, ...result }))
       .catch((error) => sendResponse({ ok: false, error: error.message }));

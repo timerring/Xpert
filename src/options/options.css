@@ -81,7 +81,8 @@ select { background: white; border: 1px solid #d9dee3; border-radius: 8px; paddi
 
 .ledger-tools { display: flex; justify-content: flex-end; margin-bottom: 18px; }
 .ledger-tools input { min-width: 260px; padding: 9px 12px; }
-.ledger-row { grid-template-columns: minmax(160px, 1fr) 140px 180px; }
+.ledger-row { grid-template-columns: minmax(120px, 1fr) 110px 110px 100px; }
+.ledger-row .button { justify-self: end; min-width: 86px; text-decoration: none; }
 
 .settings-panel { padding: 0 22px 22px; }
 .field-row { align-items: center; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; padding: 22px 0; }

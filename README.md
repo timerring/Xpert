@@ -7,8 +7,9 @@ See the [Privacy Policy](PRIVACY.md) for details about local data handling and X
 ## Features
 
 - Injects one-click buttons into timelines, search results, follower/following lists, notifications, hashtags, communities, engagement lists, and profiles
-- Mutes accounts through X's official interface without unfollowing them[^why-mute]
-- Drives X's official menus and confirmation dialogs without calling private APIs
+- Mutes accounts using the signed-in X session while preserving follows[^why-mute]
+- Offers **Undo** for 10 seconds after a one-click mute; hovering or focusing the prompt keeps it available
+- Provides **Unmute** beside each local ledger entry, with progress, error feedback, and removal after X confirms success
 - Imports bulk account lists from text, X links, CSV, or JSON
 - Processes queued accounts through background profile tabs, with stop, retry, and run-history support
 - Stores a Mute ledger for each detected X `@handle`
@@ -39,6 +40,12 @@ The final row reflects this project's product rationale; the behavior rows are b
 
 Before using the bulk queue, make sure you are signed in to X. The queue creates inactive temporary tabs and closes each one after processing the account.
 
+### Undo a Mute
+
+After clicking Mute, select **Undo** in the confirmation prompt to unmute the account and restore the original post when it is still on the page. Each account has its own prompt. After a prompt expires, open **Mute Ledger** and click **Unmute**. The ledger creates a temporary X profile tab, uses your signed-in session, and closes the tab when finished. Refresh open X pages to update their timelines after using the ledger. Older records saved before the signed-in account was identified offer **Open on X** for unmuting through X's profile menu.
+
+X request failures keep the ledger entry available for retry. Local record failures are reported separately from successful actions on X. **Clear Mute Ledger** only clears local records; use **Unmute** to change the account's status on X.
+
 ## Development and Validation
 
 No build step is required; Chrome can load the repository directly.
@@ -55,6 +62,7 @@ its Chromium installed, run:
 
 ```bash
 node scripts/check-shortcut-layout.cjs
+node scripts/check-undo-mute.cjs
 ```
 
 Set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `CHROME_PATH` to
@@ -62,9 +70,13 @@ an existing Chrome executable to use a local browser installation. CSS zoom and
 display density checks cover scaling geometry; manual browser zoom and real X
 page checks complement this synthetic fixture.
 
+The undo regression uses mocked X requests and Chrome messaging to exercise success,
+request failures, retries, rapid clicks, prompt expiry, and the ledger UI without
+changing real X accounts.
+
 ## Implementation Notes
 
-X is a continuously changing single-page application. The extension prefers relatively stable `data-testid` attributes and URL structures to identify page elements, and uses `MutationObserver` to support infinite scrolling and in-app navigation. Mute actions are still performed by X's own interface, so results, rate limits, and account permissions are determined by X.
+X is a continuously changing single-page application. The extension prefers relatively stable `data-testid` attributes and URL structures to identify page elements, and uses `MutationObserver` to support infinite scrolling and in-app navigation. Mute and unmute actions use X's web-session endpoints, so results, rate limits, and account permissions are determined by X. These endpoints and page structures may change. Storage mutations run serially in the extension service worker so concurrent UI and queue operations preserve each other's updates.
 
 This project independently implements publicly described product behavior. It does not contain third-party extension source code, names, icons, or other branded assets.
 

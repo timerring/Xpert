@@ -6,6 +6,7 @@
   let state;
   let restorePayload = null;
   let toastTimer;
+  const pendingUnmutes = new Set();
 
   const placementLabels = {
     timeline: "Timeline", followers: "Followers", following: "Following",
@@ -97,6 +98,9 @@
   }
 
   function renderLedger() {
+    $("#ledger-help").textContent = state.currentViewer === "default"
+      ? "Open an account on X and choose Unmute from its profile menu."
+      : "Use Unmute to restore an account on X. Records are removed after X confirms the change.";
     const query = Core.normalizeHandle($("#ledger-search").value) || $("#ledger-search").value.trim().toLowerCase();
     const entries = viewerAccount().muted.filter((entry) => !query || entry.handle.includes(query));
     const container = $("#ledger-list");
@@ -111,6 +115,12 @@
         <a class="handle" href="https://x.com/${encodeURIComponent(entry.handle)}" target="_blank" rel="noreferrer">@${escapeHtml(entry.handle)}</a>
         <span class="meta">${entry.source === "queue" ? "Bulk queue" : "One-click mute"}</span>
         <span class="meta">${formatDate(entry.timestamp)}</span>
+        ${state.currentViewer === "default"
+          ? `<a class="button ghost" href="https://x.com/${encodeURIComponent(entry.handle)}" target="_blank" rel="noreferrer" title="Use the X profile menu to unmute this older record">Open on X</a>`
+          : `<button class="button ghost" type="button" data-unmute="${escapeHtml(entry.handle)}"
+          aria-label="Unmute @${escapeHtml(entry.handle)}"${pendingUnmutes.has(`${state.currentViewer}/${entry.handle}`) ? " disabled" : ""}>
+          ${pendingUnmutes.has(`${state.currentViewer}/${entry.handle}`) ? "Unmuting…" : "Unmute"}
+        </button>`}
       </div>`).join("");
   }
 
@@ -193,8 +203,29 @@
 
   $("#ledger-search").addEventListener("input", renderLedger);
 
-  $("#viewer-select").addEventListener("change", () => run(() => Store.update((draft) => {
-    draft.currentViewer = $("#viewer-select").value;
+  $("#ledger-list").addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-unmute]");
+    if (!button || button.disabled) return;
+    const handle = button.dataset.unmute;
+    const viewer = state.currentViewer;
+    const key = `${viewer}/${handle}`;
+    if (pendingUnmutes.has(key)) return;
+    pendingUnmutes.add(key);
+    renderLedger();
+    try {
+      await message("UNMUTE_ACCOUNT", { handle, viewer });
+      state = await Store.getState();
+      toast(`Unmuted @${handle}. Refresh X to update your timeline.`);
+    } catch (error) {
+      toast(error.message, true);
+    } finally {
+      pendingUnmutes.delete(key);
+      render();
+    }
+  });
+
+  $("#viewer-select").addEventListener("change", () => run(() => message("SET_VIEWER", {
+    viewer: $("#viewer-select").value
   })));
 
   $("#save-settings").addEventListener("click", () => run(async () => {
@@ -237,19 +268,19 @@
 
   $("#restore-data").addEventListener("click", () => run(async () => {
     if (!restorePayload) throw new Error("Choose a backup file first");
-    await Store.importData(restorePayload, {
-      mutes: $("#import-mutes").checked,
-      settings: $("#import-settings").checked
+    await message("IMPORT_DATA", {
+      payload: restorePayload,
+      selection: {
+        mutes: $("#import-mutes").checked,
+        settings: $("#import-settings").checked
+      }
     });
   }, "Backup restored"));
 
   $$("[data-clear]").forEach((button) => button.addEventListener("click", () => {
     const type = button.dataset.clear;
     if (!confirm("Clear this local data? This will not change any status on X.")) return;
-    run(() => Store.update((draft) => {
-      if (type === "settings") draft.settings = Core.mergeSettings();
-      else Object.values(draft.accounts).forEach((account) => { account[type] = []; });
-    }), "Local data cleared");
+    run(() => message("CLEAR_LOCAL_DATA", { kind: type }), "Local data cleared");
   }));
 
   chrome.storage.onChanged.addListener(async (changes, area) => {
