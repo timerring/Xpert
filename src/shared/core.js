@@ -141,17 +141,30 @@
   }
 
   function shortcutGeometry(anchorRect, viewport, gap = 12) {
-    const width = Math.round(Number(anchorRect?.width) || 0);
-    const height = Math.round(Number(anchorRect?.height) || 0);
+    const width = Number(anchorRect?.width) || 0;
+    const height = Number(anchorRect?.height) || 0;
     const viewportWidth = Number(viewport?.width) || 0;
     const viewportHeight = Number(viewport?.height) || 0;
+    const scale = Number(viewport?.scale) || 1;
     if (!width || !height || !viewportWidth || !viewportHeight) return null;
+    const size = { width: width / scale, height: height / scale };
+    const margin = 12;
+    const anchorLeft = Number(anchorRect.left) / scale;
+    const anchorTop = Number(anchorRect.top) / scale;
+    let left = anchorLeft;
+    let top = anchorTop - size.height - gap;
+    if (top < margin) {
+      top = Math.max(margin, anchorTop);
+      left = anchorLeft - size.width - gap;
+      if (left < margin) left = anchorLeft + size.width + gap;
+    }
+    if (left < 0 || top < 0 || left + size.width > viewportWidth / scale
+      || top + size.height > viewportHeight / scale) return null;
     return {
-      bottom: Math.max(12, Math.round(viewportHeight - Number(anchorRect.top) + gap)),
-      height,
-      iconSize: Math.round(Math.min(width, height) * 32 / 55),
-      right: Math.max(12, Math.round(viewportWidth - Number(anchorRect.right))),
-      width
+      left,
+      top,
+      ...size,
+      iconSize: Math.round(Math.min(size.width, size.height) * 32 / 55)
     };
   }
 

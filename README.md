@@ -48,6 +48,20 @@ node --test
 find src -name '*.js' -exec node --check {} \;
 ```
 
+The browser layout regression checks rendered alignment across 46 viewport sizes,
+11 CSS zoom levels, and five display densities, plus resizing, animations, themes,
+scrolling, native control replacement, and shortcut settings. With Playwright and
+its Chromium installed, run:
+
+```bash
+node scripts/check-shortcut-layout.cjs
+```
+
+Set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `CHROME_PATH` to
+an existing Chrome executable to use a local browser installation. CSS zoom and
+display density checks cover scaling geometry; manual browser zoom and real X
+page checks complement this synthetic fixture.
+
 ## Implementation Notes
 
 X is a continuously changing single-page application. The extension prefers relatively stable `data-testid` attributes and URL structures to identify page elements, and uses `MutationObserver` to support infinite scrolling and in-app navigation. Mute actions are still performed by X's own interface, so results, rate limits, and account permissions are determined by X.
