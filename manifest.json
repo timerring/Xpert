@@ -2,11 +2,10 @@
   "manifest_version": 3,
   "name": "Xpert",
   "description": "Mute accounts on X with one click, including bulk queues and a local mute ledger.",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "permissions": [
     "alarms",
-    "storage",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
     "https://x.com/*",

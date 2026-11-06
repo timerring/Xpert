@@ -57,7 +57,6 @@ Xpert uses the following Chrome permissions:
 
 - **`storage`:** stores settings, user-provided account handles, queue state, run history, and the mute ledger locally.
 - **`alarms`:** schedules the next item in a user-started bulk mute queue so processing can continue when the extension service worker is suspended.
-- **`tabs`:** opens inactive X profile tabs for a user-started bulk mute queue, waits for those pages to load, sends the requested action, and closes the temporary tabs.
 - **Host access to `x.com` and `twitter.com`:** places Mute controls on supported X pages, identifies the relevant X account, and performs mute actions explicitly requested by the user.
 
 Xpert does not download or execute remotely hosted JavaScript or WebAssembly.

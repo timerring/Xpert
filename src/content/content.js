@@ -8,6 +8,26 @@
   let settings = Core.mergeSettings();
   let scanTimer = null;
   let lastPath = location.pathname;
+  let shortcutFrame = null;
+  let shortcutAnchors = null;
+  const shortcutResizeObserver = new ResizeObserver(scheduleShortcutSync);
+
+  function scheduleShortcutSync() {
+    if (shortcutFrame !== null) return;
+    shortcutFrame = requestAnimationFrame(() => {
+      shortcutFrame = null;
+      const shortcut = document.querySelector(".xm-settings-shortcut");
+      if (shortcut) {
+        syncShortcutToNativeStack(shortcut);
+        const ancestors = new Set();
+        for (const anchor of shortcutAnchors || []) {
+          for (let element = anchor; element; element = element.parentElement) ancestors.add(element);
+        }
+        if ([...ancestors].some((element) => element.getAnimations()
+          .some((animation) => animation.playState === "running"))) scheduleShortcutSync();
+      }
+    });
+  }
 
   const ICONS = {
     mute: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.62 2.21 2.21 3.62l4.17 4.17H3v8h4l5 4v-6.17l4.88 4.88A8.92 8.92 0 0 1 14 20v2a10.9 10.9 0 0 0 4.3-2.08l2.08 2.08 1.41-1.41L3.62 2.21ZM10 15.84l-2-1.6V9.41l2 2v4.43ZM12 4 9.91 5.67 12 7.76V4Zm6.59 9.59 1.55 1.55A10.9 10.9 0 0 0 21 11h-2c0 .9-.14 1.77-.41 2.59ZM16 11c0 .08 0 .15-.01.23l1.72 1.72c.19-.62.29-1.27.29-1.95 0-2.76-1.67-5.13-4-6.17V7.1c1.2.83 2 2.26 2 3.9Z"/></svg>',
@@ -205,27 +225,48 @@
   }
 
   function syncShortcutToNativeStack(shortcut) {
-    const nativeButtons = [...document.querySelectorAll(
+    const nativeButtons = [...new Set([...document.querySelectorAll(
       '[data-testid="GrokDrawerHeader"], [data-testid="chat-drawer-main"]'
-    )];
-    const nativeRects = nativeButtons.map((button) => button.getBoundingClientRect());
+    )].map((element) => element.closest('button, [role="button"]')
+      || element.querySelector('button, [role="button"]') || element))];
+    if (shortcutAnchors === null || nativeButtons.length !== shortcutAnchors.length
+      || nativeButtons.some((button, index) => button !== shortcutAnchors[index])) {
+      shortcutResizeObserver.disconnect();
+      shortcutResizeObserver.observe(document.documentElement);
+      nativeButtons.forEach((button) => shortcutResizeObserver.observe(button));
+      shortcutAnchors = nativeButtons;
+    }
+    const nativeRects = nativeButtons.map((button) => {
+      const rect = button.getBoundingClientRect();
+      const style = getComputedStyle(button);
+      // Follow compact, visible launcher controls when drawers are collapsed.
+      const visible = style.visibility === "visible" && Number(style.opacity) > 0
+        && rect.bottom > 0 && rect.top < window.innerHeight
+        && rect.right > 0 && rect.left < window.innerWidth;
+      return visible && button.offsetWidth <= 96 && button.offsetHeight <= 96 ? rect : null;
+    });
     const anchorRect = Core.topmostRect(nativeRects);
     if (!anchorRect) {
+      shortcut.hidden = false;
       shortcut.removeAttribute("style");
       return;
     }
     const geometry = Core.shortcutGeometry(anchorRect, {
-      width: window.innerWidth,
-      height: window.innerHeight
+      width: document.documentElement.clientWidth * (document.documentElement.currentCSSZoom || 1),
+      height: window.innerHeight,
+      scale: document.body.currentCSSZoom || 1
     });
+    shortcut.hidden = !geometry;
     if (!geometry) return;
 
     const styleSource = nativeButtons[nativeRects.indexOf(anchorRect)];
     const nativeStyle = getComputedStyle(styleSource);
     shortcut.style.width = `${geometry.width}px`;
     shortcut.style.height = `${geometry.height}px`;
-    shortcut.style.right = `${geometry.right}px`;
-    shortcut.style.bottom = `${geometry.bottom}px`;
+    shortcut.style.left = `${geometry.left}px`;
+    shortcut.style.top = `${geometry.top}px`;
+    shortcut.style.right = "auto";
+    shortcut.style.bottom = "auto";
     shortcut.style.setProperty("--xm-shortcut-icon-size", `${geometry.iconSize}px`);
     shortcut.style.background = nativeStyle.background;
     shortcut.style.border = nativeStyle.border;
@@ -238,6 +279,8 @@
     let shortcut = document.querySelector(".xm-settings-shortcut");
     if (!settings.showShortcut) {
       shortcut?.remove();
+      shortcutResizeObserver.disconnect();
+      shortcutAnchors = null;
       return;
     }
     if (!shortcut) {
@@ -316,8 +359,24 @@
   Store.getState().then((state) => {
     settings = state.settings;
     scan();
-    new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+    new MutationObserver((mutations) => {
+      const externalChanges = mutations.filter((mutation) =>
+        !mutation.target.closest?.(".xm-settings-shortcut"));
+      if (externalChanges.some((mutation) => mutation.type === "childList")) scan();
+      if (externalChanges.length) scheduleShortcutSync();
+    }).observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class", "hidden"]
+    });
     window.addEventListener("resize", scan);
+    window.addEventListener("resize", scheduleShortcutSync);
+    window.addEventListener("scroll", scheduleShortcutSync, true);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", scheduleShortcutSync);
+    for (const event of ["transitionrun", "transitionend", "animationstart", "animationend"]) {
+      document.addEventListener(event, scheduleShortcutSync, true);
+    }
     chrome.runtime.sendMessage({ type: "CONTENT_READY" }).catch(() => {});
   });
 })();

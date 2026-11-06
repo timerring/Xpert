@@ -66,6 +66,7 @@
   --xm-shortcut-icon-size: 32px;
   align-items: center;
   background: rgba(255, 255, 255, .85);
+  box-sizing: border-box;
   border: 1px solid rgb(159, 181, 195);
   border-radius: 16px;
   bottom: 20px;
@@ -80,6 +81,10 @@
   right: 36px;
   width: 55px;
   z-index: 9999;
+}
+
+.xm-settings-shortcut[hidden] {
+  display: none;
 }
 
 .xm-settings-shortcut svg {
