@@ -5,6 +5,9 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
+  // Public X web-client credential; account authentication comes from the active X session.
+  const X_WEB_BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
+
   const RESERVED_PATHS = new Set([
     "compose", "explore", "hashtag", "home", "i", "intent", "login",
     "messages", "notifications", "search", "settings", "share", "signup"
@@ -175,6 +178,7 @@
   }
 
   return {
+    X_WEB_BEARER_TOKEN,
     DEFAULT_SETTINGS,
     PLACEMENTS,
     extractUserId,

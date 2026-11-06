@@ -271,3 +271,5 @@ async function sendMessageWithRetry(tabId, message) {
   }
   throw new Error(lastError?.message || "Could not connect to the X page");
 }
+
+importScripts("shared/keywords.js", "keywords-background.js");
