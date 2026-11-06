@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Xpert Control Center</title>
   <link rel="stylesheet" href="options.css">
+  <link rel="stylesheet" href="keywords.css">
 </head>
 <body>
   <div class="shell">
@@ -17,18 +18,20 @@
         <button class="nav-item active" data-view="overview">Overview</button>
         <button class="nav-item" data-view="queue">Bulk Queue <span id="queue-badge"></span></button>
         <button class="nav-item" data-view="ledger">Mute Ledger</button>
+        <button class="nav-item" data-view="keywords">Muted Words</button>
         <button class="nav-item" data-view="settings">Settings</button>
         <button class="nav-item" data-view="backup">Backup & Restore</button>
       </nav>
-      <p class="local-note">All data stays in this browser.</p>
+      <p class="local-note">History stays here. Muting settings are saved on X.</p>
     </aside>
 
     <main>
       <header class="topbar">
-        <div>
+        <div class="local-viewer">
           <p class="eyebrow">Current X account</p>
           <select id="viewer-select" aria-label="Current X account"></select>
         </div>
+        <div class="keyword-viewer"><p class="eyebrow">Connected X account</p><strong id="kw-toolbar-viewer">Connect to X</strong></div>
         <a class="open-x" href="https://x.com/timerringX" target="_blank" rel="noreferrer">Open X ↗</a>
       </header>
 
@@ -86,6 +89,72 @@
           </div>
           <p id="ledger-help">Use Unmute to restore an account on X. Records are removed after X confirms the change.</p>
           <div id="ledger-list" class="list empty">No records yet.</div>
+        </article>
+      </section>
+
+      <section class="view" id="view-keywords" aria-labelledby="kw-title">
+        <div class="heading">
+          <div><p class="eyebrow">Native X controls</p><h1 id="kw-title">Muted Words</h1></div>
+        </div>
+        <p class="kw-intro">Manage the words and phrases muted by X in Home and notifications. Matching posts can still appear in search.</p>
+        <div class="kw-connection panel">
+          <div><strong id="kw-viewer">Connect to your signed-in X account</strong><p id="kw-connection-detail">Load your current muted words before making changes.</p><p id="kw-source-hint" hidden></p></div>
+          <button class="button primary" type="button" id="kw-connect">Connect to X</button>
+        </div>
+        <p id="kw-notice" class="kw-notice" role="status" aria-live="polite" hidden></p>
+
+        <article class="panel kw-composer">
+          <h2>Add words in bulk</h2>
+          <p>Enter one word or phrase per line. Preview up to 100 unique words, then apply them to X. Each word is checked again; existing words keep their current settings.</p>
+          <label for="kw-input">Words and phrases</label>
+          <textarea id="kw-input" rows="5" placeholder="spoiler phrase&#10;topic to mute&#10;#example" aria-describedby="kw-draft-summary"></textarea>
+          <p class="hint" id="kw-draft-summary">Each word or phrase can contain up to 140 characters.</p>
+          <div class="kw-fields">
+            <fieldset><legend>Where to mute</legend>
+              <label class="kw-check"><input id="kw-home" type="checkbox" checked> Home timeline</label>
+              <label for="kw-notifications">Notifications</label>
+              <select id="kw-notifications"><option value="everyone">From anyone</option><option value="following">From people you don’t follow</option><option value="none">Keep notifications</option></select>
+            </fieldset>
+            <fieldset><legend>How long</legend>
+              <label for="kw-duration">Mute duration</label>
+              <select id="kw-duration"><option value="forever">Forever</option><option value="day">24 hours</option><option value="week">7 days</option><option value="month">30 days</option></select>
+              <p class="hint">X applies the duration when each word is added.</p>
+            </fieldset>
+          </div>
+          <div class="kw-actions"><button class="button ghost" type="button" id="kw-preview" disabled>Preview words</button></div>
+          <section id="kw-preview-panel" class="kw-review" aria-labelledby="kw-preview-title" hidden>
+            <h3 id="kw-preview-title">Review words</h3><p id="kw-preview-summary" aria-live="polite"></p>
+            <p class="hint">X checks each word again. Existing words keep their current settings; missing words use the options above.</p>
+            <ul id="kw-preview-list" class="kw-review-list"></ul>
+            <div class="kw-actions"><button class="button primary" type="button" id="kw-add" disabled>Apply to X</button></div>
+          </section>
+        </article>
+
+        <article class="panel" id="kw-job-panel" aria-labelledby="kw-job-title" hidden>
+          <div class="kw-section-heading"><div><h2 id="kw-job-title">Batch progress</h2><p id="kw-job-summary" aria-live="polite"></p></div><div class="kw-actions"><button class="button ghost" type="button" id="kw-pause" hidden>Pause</button><button class="button primary" type="button" id="kw-resume" hidden>Continue</button></div></div>
+          <progress id="kw-progress" value="0" max="1" aria-label="Processed words"></progress>
+          <p id="kw-job-error" class="kw-notice kw-error" role="status" hidden></p>
+          <ul id="kw-job-items" class="kw-review-list"></ul>
+          <div class="kw-job-footer"><p class="hint">Clearing batch results keeps your muted words on X.</p><button class="button ghost" type="button" id="kw-clear-job">Clear batch results</button></div>
+        </article>
+
+        <article class="panel" aria-labelledby="kw-list-title">
+          <div class="kw-section-heading"><div><h2 id="kw-list-title">Your muted words on X</h2><p id="kw-list-summary">Connect to X to load this list.</p></div><label class="kw-search-label" for="kw-search">Search words<input id="kw-search" type="search" placeholder="Search muted words" disabled></label></div>
+          <div class="kw-selection"><label class="kw-check"><input id="kw-select-visible" type="checkbox" disabled> Select visible</label><span id="kw-selected-count">0 selected · max 100</span><button class="button danger-button" type="button" id="kw-remove-preview" disabled>Review removal</button></div>
+          <p id="kw-selection-limit" class="kw-notice kw-error" role="status" aria-live="polite" hidden></p>
+          <section id="kw-remove-panel" class="kw-review kw-remove-review" aria-labelledby="kw-remove-title" hidden>
+            <h3 id="kw-remove-title">Confirm removal</h3><p id="kw-remove-summary"></p><ul id="kw-remove-list" class="kw-review-list"></ul>
+            <div class="kw-actions"><button class="button ghost" type="button" id="kw-remove-cancel">Cancel</button><button class="button danger-button" type="button" id="kw-remove-confirm">Remove from X</button></div>
+          </section>
+          <section id="kw-edit-panel" class="kw-review" aria-labelledby="kw-edit-title" hidden>
+            <h3 id="kw-edit-title">Edit muted word</h3><p id="kw-edit-word"></p><p id="kw-edit-account" class="hint"></p>
+            <div class="kw-fields">
+              <fieldset><legend>Where to mute</legend><label class="kw-check"><input id="kw-edit-home" type="checkbox"> Home timeline</label><label for="kw-edit-notifications">Notifications</label><select id="kw-edit-notifications"><option value="everyone">From anyone</option><option value="following">From people you don’t follow</option><option value="none">Keep notifications</option></select></fieldset>
+              <fieldset><legend>How long</legend><label for="kw-edit-duration">Mute duration</label><select id="kw-edit-duration"><option value="keep">Keep current expiry</option><option value="forever">Forever</option><option value="day">24 hours from now</option><option value="week">7 days from now</option><option value="month">30 days from now</option></select></fieldset>
+            </div>
+            <div class="kw-actions"><button class="button ghost" type="button" id="kw-edit-cancel">Cancel</button><button class="button primary" type="button" id="kw-edit-save">Save on X</button></div>
+          </section>
+          <div id="kw-list" class="kw-empty">Your native muted words will appear here.</div>
         </article>
       </section>
 
@@ -148,6 +217,8 @@
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="../shared/core.js"></script>
   <script src="../shared/storage.js"></script>
+  <script src="../shared/keywords.js"></script>
   <script src="options.js"></script>
+  <script src="keywords.js"></script>
 </body>
 </html>

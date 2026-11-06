@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Xpert",
-  "description": "Mute accounts on X with one click, undo accidental mutes, and manage bulk queues and a local mute ledger.",
-  "version": "0.2.4",
+  "description": "Mute accounts and words on X with quick actions, undo, bulk queues, and native word settings.",
+  "version": "0.2.5",
   "permissions": [
     "alarms",
     "storage"
@@ -34,6 +34,15 @@
   "content_scripts": [
     {
       "matches": [
+        "https://x.com/settings/*",
+        "https://twitter.com/settings/*"
+      ],
+      "js": ["src/content/keyword-transaction-main.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
         "https://x.com/*",
         "https://twitter.com/*"
       ],
@@ -42,8 +51,12 @@
       ],
       "js": [
         "src/shared/core.js",
+        "src/shared/keywords.js",
         "src/shared/storage.js",
-        "src/content/content.js"
+        "src/content/content.js",
+        "src/content/keyword-transaction.js",
+        "src/content/keywords-api.js",
+        "src/content/keyword-selection.js"
       ],
       "run_at": "document_idle"
     }

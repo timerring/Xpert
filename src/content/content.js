@@ -4,7 +4,6 @@
   const Core = globalThis.XMuteCore;
   const Store = globalThis.XMuteStorage;
   const MARKER = "xmInjected";
-  const X_WEB_BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
   let settings = Core.mergeSettings();
   let scanTimer = null;
   let lastPath = location.pathname;
@@ -192,7 +191,7 @@
       credentials: "include",
       signal: AbortSignal.timeout(20000),
       headers: {
-        authorization: `Bearer ${X_WEB_BEARER_TOKEN}`,
+        authorization: `Bearer ${Core.X_WEB_BEARER_TOKEN}`,
         "content-type": "application/x-www-form-urlencoded",
         "x-csrf-token": csrfToken,
         "x-twitter-active-user": "yes",
