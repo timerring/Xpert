@@ -18,7 +18,7 @@ Xpert handles only the data needed to provide its user-facing muting and local r
 - **Muted words:** words or phrases entered by the user, text explicitly selected within a post for a muted-word draft, the native muted-word list returned by X, scope and duration choices, and local batch progress. Selected text is processed locally until the user chooses to add the word on X.
 - **Imported post archives:** account identifiers and profile labels, post identifiers, full text, timestamps, post types, reply and quote references, media links, and import reports from files explicitly selected by the user in **My Posts**. The importer reads supported account and post data files. Other archive sections, including Direct Messages and address books, are excluded from the post library.
 
-Xpert does not collect health information, financial or payment information, precise location, or personal communications.
+My Posts stores user-selected post text locally, which may contain personal information included in those posts. The importer excludes Direct Messages, address books, and location metadata.
 
 ## How the Data Is Used
 
