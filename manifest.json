@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Xpert",
-  "description": "Mute accounts and words on X with quick actions, undo, bulk queues, and native word settings.",
-  "version": "0.2.5",
+  "description": "Manage X mutes and native muted words, and search or export your own local post archive.",
+  "version": "0.2.6",
   "permissions": [
     "alarms",
     "storage"

@@ -1,6 +1,6 @@
 # Xpert
 
-An independently implemented Chrome Manifest V3 extension that adds one-click Mute buttons to posts, user lists, and profiles on X (Twitter), with bulk queues, a local mute ledger, statistics, and backups.
+An independently implemented Chrome Manifest V3 extension for managing mutes on X (Twitter) and keeping a searchable local archive of your own posts.
 
 See the [Privacy Policy](PRIVACY.md) for details about local data handling and X requests.
 
@@ -18,6 +18,7 @@ See the [Privacy Policy](PRIVACY.md) for details about local data handling and X
 - Adds native muted words in batches, with a preview, duplicate detection, pause/resume, and per-word results
 - Opens a muted-word draft from text selected in a post, with X's native scope and duration controls
 - Reads, searches, edits, and removes words from the signed-in account's native muted-word list
+- Imports your official X archive into **My Posts** for local date filtering, text search, and JSON / Markdown export
 
 ### Why Mute Instead of Block?
 
@@ -61,6 +62,22 @@ Batch processing is sequential. An error pauses the batch with its progress reta
 
 Native word rules live on X. Xpert's JSON backup covers the existing local account ledger and settings; manage native words through **Muted Words** or X's settings. Keep the same X account signed in while a batch is running.
 
+### My Posts: Local Archive
+
+Open **My Posts** in the Control Center. Request and download your archive through [X's archive settings](https://help.x.com/en/managing-your-account/how-to-download-your-x-archive), then choose its ZIP file, its extracted folder, or the account and post data files together. You can also import a JSON export created by **My Posts**. Review the archive account, date span, valid posts, and warnings before importing.
+
+The local library belongs to one stable X account ID. Repeated imports merge posts by their string ID. Export and clear the library before importing a different account. Importing preserves the existing library if the save fails.
+
+Filter by inclusive start and end dates in your device's time zone or UTC. Choose original posts, replies, quotes, and reposts separately. Text search matches literal text locally, including Chinese and emoji. JSON and Markdown exports contain every matching post across all result pages. My Posts JSON exports can be imported again, including exports of a selected range.
+
+The library saves post text, timestamps, links, reply/quote references, and media links. Keep the original X archive for image and video files. Media links require an internet connection and may later become unavailable. Long-form data that can be joined by an explicit post ID is merged into the post; unsupported data is reported for inspection. The displayed date span describes imported records, and an archive snapshot or search result cannot prove that every historical post is present.
+
+Import limits are 128 MB per account/post data file, 256 MB of selected data, and 200,000 post records per import. Media files inside ZIPs are skipped. Extract ZIP64 or split archives first and select the data folder. The importer checks the selected ZIP entries' sizes and checksums before presenting the preview.
+
+Posts are stored in an independent IndexedDB database on this device. **My Posts** exports and **Clear local post library** apply to this database. The existing **Backup & Restore** page continues to manage mute records, queue history, and settings. Keep a downloaded JSON export as a separate backup before uninstalling the extension or clearing its data.
+
+This version imports local files. Online timeline retrieval is being investigated separately; see the [read-only investigation](docs/online-posts-investigation.md) for observed pagination behavior and remaining coverage limits.
+
 ## Development and Validation
 
 No build step is required; Chrome can load the repository directly.
@@ -79,6 +96,8 @@ its Chromium installed, run:
 node scripts/check-shortcut-layout.cjs
 node scripts/check-undo-mute.cjs
 node scripts/check-keywords.cjs
+node scripts/check-posts.cjs
+node scripts/check-posts-ui.cjs
 ```
 
 Set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `CHROME_PATH` to
@@ -94,6 +113,11 @@ The keyword regression also uses mocked requests. It checks batch reconciliation
 scope and duration parameters, account changes, partial failures, text selection,
 and responsive controls. The native endpoint contract was checked against X's
 current muted-word settings page and its loaded client code on November 7, 2026.
+
+The post checks use synthetic archives and a fresh IndexedDB database. They cover
+ZIP validation, precise post IDs, Unicode text, time-zone boundaries, duplicate
+imports, atomic rollback, cross-tab updates, a 10,000-post library, filtered export
+and restoration, and responsive layouts. UI screenshots use synthetic posts.
 
 ## Implementation Notes
 
