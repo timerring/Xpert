@@ -39,7 +39,7 @@ jobs:
           ref: main
           fetch-depth: 0
           persist-credentials: false
-      - name: Find draft for this commit
+      - name: Find the draft for the current version
         id: draft
         env:
           GH_TOKEN: ${{ github.token }}
@@ -48,7 +48,8 @@ jobs:
           if ! sha="$(git rev-parse --verify "refs/tags/$tag^{commit}" 2>/dev/null)"; then
             exit 0
           fi
-          if [[ "$(gh release view "$tag" --json isDraft --jq .isDraft)" == true ]]; then
+          draft="$(gh release view "$tag" --json isDraft --jq .isDraft)"
+          if [[ "$draft" == true ]]; then
             git merge-base --is-ancestor "$sha" HEAD
             echo "tag=$tag" >> "$GITHUB_OUTPUT"
             echo "sha=$sha" >> "$GITHUB_OUTPUT"
@@ -81,9 +82,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" != true ]]; then
-            echo "Release already published or draft unavailable"
-            exit 1
+          draft="$(gh release view "$TAG" --json isDraft --jq .isDraft)"
+          if [[ "$draft" == false ]]; then
+            echo "Release already published"
+            exit 0
           fi
           gh release upload "$TAG" dist/*.zip dist/SHA256SUMS --clobber
           gh release edit "$TAG" --draft=false
