@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xpert-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        id: release-please
+      # Bot-created PR events require approval. Dispatch read-only CI on the
+      # same branch so its head gets an immediate check with no extra token.
+      - name: Run CI on the release PR
+        if: steps.release-please.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.release-please.outputs.pr }}
+        run: |
+          branch="$(jq -er .headBranchName <<< "$PR")"
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$branch"
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Find draft for this commit
+        id: draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(jq -er '.version' manifest.json)"
+          if ! sha="$(git rev-parse --verify "refs/tags/$tag^{commit}" 2>/dev/null)"; then
+            exit 0
+          fi
+          if [[ "$(gh release view "$tag" --json isDraft --jq .isDraft)" == true ]]; then
+            git merge-base --is-ancestor "$sha" HEAD
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          fi
+    outputs:
+      tag: ${{ steps.draft.outputs.tag }}
+      sha: ${{ steps.draft.outputs.sha }}
+
+  test:
+    needs: prepare
+    if: needs.prepare.outputs.tag != ''
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+
+  publish:
+    needs: [prepare, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.prepare.outputs.tag }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - run: python3 scripts/package-extension.py dist --tag "$TAG"
+      - name: Publish tested package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" != true ]]; then
+            echo "Release already published or draft unavailable"
+            exit 1
+          fi
+          gh release upload "$TAG" dist/*.zip dist/SHA256SUMS --clobber
+          gh release edit "$TAG" --draft=false
