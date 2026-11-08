@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Extension checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - run: node --test
+      - run: find src -name '*.js' -exec node --check {} \;
+      - name: Install Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/xpert-ci" --no-save playwright@1.65.0
+          "$RUNNER_TEMP/xpert-ci/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Browser regression checks
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/xpert-ci/node_modules/playwright
+        run: |
+          for suite in shortcut-layout undo-mute keywords posts posts-ui; do
+            node "scripts/check-$suite.cjs"
+          done
+      - name: Validate package
+        run: python3 scripts/package-extension.py "$RUNNER_TEMP/xpert-package"

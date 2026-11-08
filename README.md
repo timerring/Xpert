@@ -119,6 +119,23 @@ ZIP validation, precise post IDs, Unicode text, time-zone boundaries, duplicate
 imports, atomic rollback, cross-tab updates, a 10,000-post library, filtered export
 and restoration, and responsive layouts. UI screenshots use synthetic posts.
 
+## Automated Releases
+
+PRs targeting `main` run the Node tests, Chromium regressions, and package validation in **CI**. Use Conventional Commit titles when squash merging, such as `fix: ...` for a patch or `feat: ...` for a minor release.
+
+Release Please tracks versions from v0.2.6 and maintains a release PR with the version in `manifest.json`, its own version metadata, and the changelog. Review the proposed version and merge the release PR after its checks pass. The **Release** workflow creates a tag and draft, tests the tagged commit, then uploads the ZIP and `SHA256SUMS` before publishing the draft.
+
+GitHub Actions needs **Allow GitHub Actions to create and approve pull requests** in this repository's Actions settings. The workflow uses that permission to create release PRs. It dispatches read-only CI on the release branch so the bot's approval-gated PR event is not needed for the checks.
+
+If testing or publication fails, rerun the failed jobs. You can also run **Release** manually on `main` to retry the draft for its current version. For local packaging from a clean checkout:
+
+```bash
+python3 scripts/package-extension.py dist
+(cd dist && shasum -a 256 -c SHA256SUMS)
+```
+
+Use the verified GitHub Release ZIP for a separate Chrome Web Store submission. For an unpacked local update, extract that ZIP into the fixed `dist/Xpert` directory and reload Xpert in the browser.
+
 ## Implementation Notes
 
 X is a continuously changing single-page application. The extension prefers relatively stable `data-testid` attributes and URL structures to identify page elements, and uses `MutationObserver` to support infinite scrolling and in-app navigation. Mute and unmute actions use X's web-session endpoints, so results, rate limits, and account permissions are determined by X. These endpoints and page structures may change. Storage mutations run serially in the extension service worker so concurrent UI and queue operations preserve each other's updates.
