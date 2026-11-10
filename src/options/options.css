@@ -111,3 +111,7 @@ select { background: white; border: 1px solid #d9dee3; border-radius: 8px; paddi
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .heading > p { display: none; }
 }
+
+#view-follow-check [hidden] { display: none; }
+#follow-results { padding-inline-start: 24px; }
+#follow-results li { padding-block: 5px; overflow-wrap: anywhere; }

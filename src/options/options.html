@@ -21,6 +21,7 @@
         <button class="nav-item" data-view="ledger">Mute Ledger</button>
         <button class="nav-item" data-view="keywords">Muted Words</button>
         <button class="nav-item" data-view="posts">My Posts</button>
+        <button class="nav-item" data-view="follow-check">Follow Check</button>
         <button class="nav-item" data-view="settings">Settings</button>
         <button class="nav-item" data-view="backup">Backup & Restore</button>
       </nav>
@@ -216,6 +217,42 @@
         </article>
       </section>
 
+      <section class="view" id="view-follow-check">
+        <div class="heading">
+          <div><p class="eyebrow">Archive snapshot</p><h1>Follow Check</h1></div>
+          <p>Compare your followers and following from one X archive.</p>
+        </div>
+        <article class="panel">
+          <h2>Choose your X archive</h2>
+          <p>Use the ZIP or its extracted data folder. Results reflect the supplied snapshot and depend on having every follower and following file.</p>
+          <div class="posts-actions">
+            <button class="button primary" id="follow-choose-zip" type="button">Choose ZIP</button>
+            <button class="button ghost" id="follow-choose-folder" type="button">Choose folder</button>
+            <a href="https://help.x.com/en/managing-your-account/how-to-download-your-x-archive" target="_blank" rel="noreferrer">Get your X archive ↗</a>
+          </div>
+          <input id="follow-zip" type="file" accept=".zip" hidden>
+          <input id="follow-folder" type="file" webkitdirectory hidden>
+          <p id="follow-status" role="status"></p>
+        </article>
+        <article class="panel" id="follow-report" hidden>
+          <h2 id="follow-owner"></h2>
+          <label for="follow-category">Relationship</label>
+          <select id="follow-category">
+            <option value="followingOnly">I follow them only</option>
+            <option value="followersOnly">They follow me only</option>
+            <option value="mutual">Mutual follows</option>
+          </select>
+          <p class="hint">The first two lists show one-way follows. X archives identify accounts by ID. Open a profile to see its current handle and relationship.</p>
+          <p id="follow-count" aria-live="polite"></p>
+          <ul id="follow-results"></ul>
+          <div class="posts-pagination">
+            <button class="button ghost" id="follow-prev" type="button">Previous</button>
+            <span id="follow-page"></span>
+            <button class="button ghost" id="follow-next" type="button">Next</button>
+          </div>
+        </article>
+      </section>
+
       <section class="view" id="view-settings">
         <div class="heading">
           <div><p class="eyebrow">Preferences</p><h1>Settings</h1></div>
@@ -282,5 +319,7 @@
   <script src="../shared/archive-reader.js"></script>
   <script src="../shared/post-store.js"></script>
   <script src="posts.js"></script>
+  <script src="../shared/follow-check.js"></script>
+  <script src="follow-check.js"></script>
 </body>
 </html>

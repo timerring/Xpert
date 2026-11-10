@@ -18,6 +18,8 @@ Xpert handles only the data needed to provide its user-facing muting and local r
 - **Muted words:** words or phrases entered by the user, text explicitly selected within a post for a muted-word draft, the native muted-word list returned by X, scope and duration choices, and local batch progress. Selected text is processed locally until the user chooses to add the word on X.
 - **Imported post archives:** account identifiers and profile labels, post identifiers, full text, timestamps, post types, reply and quote references, media links, and import reports from files explicitly selected by the user in **My Posts**. The importer reads supported account and post data files. Other archive sections, including Direct Messages and address books, are excluded from the post library.
 
+**Follow Check** reads the archive owner and follower/following account IDs from a user-selected X archive. The comparison and results stay in the Control Center page’s memory until it is closed or refreshed. Opening a profile link navigates to X.
+
 My Posts stores user-selected post text locally, which may contain personal information included in those posts. The importer excludes Direct Messages, address books, and location metadata.
 
 ## How the Data Is Used
