@@ -46,7 +46,7 @@
     return (crc ^ 0xffffffff) >>> 0;
   }
 
-  async function zipEntries(file) {
+  async function zipEntries(file, selectFile) {
     if (file.size < 22) throw new Error("The ZIP is incomplete");
     const tailStart = Math.max(0, file.size - 65557);
     const tail = await bytes(file, tailStart, file.size - tailStart);
@@ -86,7 +86,7 @@
       // X data filenames are ASCII. Non-UTF8 media names are never extracted.
       const name = pathName(new TextDecoder().decode(nameBytes));
       position = next;
-      if (!officialFile(name)) continue;
+      if (!selectFile(name)) continue;
       if (seen.has(name.toLowerCase())) throw new Error(`The ZIP contains duplicate data file ${name}`);
       seen.add(name.toLowerCase());
       if (disk || compressed === 0xffffffff || uncompressed === 0xffffffff || localOffset === 0xffffffff) throw new Error(`ZIP64 or split data files need extraction first. ${fallback}`);
@@ -95,11 +95,10 @@
       checkSize(compressed, name);
       checkSize(uncompressed, name);
       total += uncompressed;
-      if (total > MAX_TOTAL_BYTES || entries.length >= MAX_FILES) throw new Error("Import up to 256 MB of account and post data in at most 1,000 files at a time");
+      if (total > MAX_TOTAL_BYTES || entries.length >= MAX_FILES) throw new Error("Import up to 256 MB of archive data in at most 1,000 files at a time");
       entries.push({ name, nameBytes, flags, method, crc, compressed, uncompressed, localOffset, directoryOffset: offset });
     }
     if (position !== directory.length) throw new Error("The ZIP directory has unexpected trailing records");
-    if (!entries.length) throw new Error("This ZIP contains no supported X archive account or tweet files");
     return entries;
   }
 
@@ -142,23 +141,37 @@
   }
 
   async function readFiles(input, onProgress = () => {}) {
+    const parsed = await readDataFiles(input, {
+      selectFile: officialFile,
+      selectLooseFile: (file) => !file.webkitRelativePath && /\.json$/i.test(file.name),
+      parse: Posts.parseArchiveText,
+      missing: "Choose account.js together with tweets.js and every tweet part, or choose an Xpert My Posts JSON export",
+      onProgress,
+    });
+    return Posts.buildArchive(parsed);
+  }
+
+  async function readDataFiles(input, {
+    selectFile, selectLooseFile = () => false, parse, missing, onProgress = () => {},
+  }) {
     const files = Array.from(input || []);
     if (!files.length) throw new Error("Choose your X archive ZIP or its extracted data folder");
     const archives = files.filter((file) => /\.zip$/i.test(file.name));
     const parsed = [];
     if (archives.length) {
       if (files.length !== 1) throw new Error("Choose one ZIP at a time, or choose the extracted data files together");
-      const entries = await zipEntries(archives[0]);
+      const entries = await zipEntries(archives[0], selectFile);
+      if (!entries.length) throw new Error(missing);
       for (let index = 0; index < entries.length; index++) {
         const entry = entries[index];
         onProgress({ phase: "reading", processed: index, total: entries.length, file: entry.name });
         const text = await unzipEntry(archives[0], entry);
-        parsed.push(Posts.parseArchiveText(text, entry.name));
+        parsed.push(parse(text, entry.name));
         onProgress({ phase: "parsing", processed: index + 1, total: entries.length, file: entry.name });
       }
     } else {
-      const selected = files.filter((file) => officialFile(file.name) || !file.webkitRelativePath && /\.json$/i.test(file.name));
-      if (!selected.length) throw new Error("Choose account.js together with tweets.js and every tweet part, or choose an Xpert My Posts JSON export");
+      const selected = files.filter((file) => selectFile(file.name) || selectLooseFile(file));
+      if (!selected.length) throw new Error(missing);
       if (selected.length > MAX_FILES) throw new Error("Import at most 1,000 data files at a time");
       let totalBytes = 0;
       for (let index = 0; index < selected.length; index++) {
@@ -166,17 +179,17 @@
         const name = pathName(file.webkitRelativePath || file.name);
         checkSize(file.size, name);
         totalBytes += file.size;
-        if (totalBytes > MAX_TOTAL_BYTES) throw new Error("Import up to 256 MB of account and post data at a time");
+        if (totalBytes > MAX_TOTAL_BYTES) throw new Error("Import up to 256 MB of archive data at a time");
         onProgress({ phase: "reading", processed: index, total: selected.length, file: name });
         let text;
         try { text = utf8.decode(new Uint8Array(await file.arrayBuffer())); }
         catch { throw new Error(`${name} could not be read as UTF-8 text`); }
-        parsed.push(Posts.parseArchiveText(text, name));
+        parsed.push(parse(text, name));
         onProgress({ phase: "parsing", processed: index + 1, total: selected.length, file: name });
       }
     }
-    return Posts.buildArchive(parsed);
+    return parsed;
   }
 
-  return { readFiles, MAX_FILE_BYTES, MAX_TOTAL_BYTES };
+  return { readFiles, readDataFiles, MAX_FILE_BYTES, MAX_TOTAL_BYTES };
 });

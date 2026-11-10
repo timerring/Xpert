@@ -78,6 +78,12 @@ Posts are stored in an independent IndexedDB database on this device. **My Posts
 
 This version imports local files. Online timeline retrieval is being investigated separately; see the [read-only investigation](docs/online-posts-investigation.md) for observed pagination behavior and remaining coverage limits.
 
+### Follow Check
+
+Open **Follow Check** in the Control Center and choose an official X archive ZIP or its extracted data folder. Use a single snapshot containing `account.js`, `follower.js`, `following.js`, and all relationship parts. The comparison shows accounts you follow that do not follow you back, accounts that follow you that you do not follow, and mutual follows. Each entry links to an X profile by account ID.
+
+Results describe the supplied snapshot. Use a fresh archive for a more recent comparison. If ZIP64 extraction is required, select the extracted data folder. The comparison runs locally and the report stays in memory until the page is closed or refreshed.
+
 ## Development and Validation
 
 No build step is required; Chrome can load the repository directly.
