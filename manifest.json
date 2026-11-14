@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Xpert",
-  "description": "Manage X mutes and native muted words, and search or export your own local post archive.",
+  "description": "Manage X mutes and muted words. Search and export your local post archive and browsing history.",
   "version": "0.2.6",
   "permissions": [
     "alarms",
@@ -56,7 +56,9 @@
         "src/content/content.js",
         "src/content/keyword-transaction.js",
         "src/content/keywords-api.js",
-        "src/content/keyword-selection.js"
+        "src/content/keyword-selection.js",
+        "src/shared/history.js",
+        "src/content/history.js"
       ],
       "run_at": "document_idle"
     }

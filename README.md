@@ -1,6 +1,6 @@
 # Xpert
 
-An independently implemented Chrome Manifest V3 extension for managing mutes on X (Twitter) and keeping a searchable local archive of your own posts.
+An independently implemented Chrome Manifest V3 extension for managing mutes on X (Twitter), keeping a local post archive, and finding pages you previously visited on X.
 
 See the [Privacy Policy](PRIVACY.md) for details about local data handling and X requests.
 
@@ -14,11 +14,12 @@ See the [Privacy Policy](PRIVACY.md) for details about local data handling and X
 - Processes queued accounts through background profile tabs, with stop, retry, and run-history support
 - Stores a Mute ledger for each detected X `@handle`
 - Supports ledger search, full JSON exports, selective restore, and local data cleanup
-- Stores extension settings and local history in `chrome.storage.local`
+- Stores extension settings and mute records in `chrome.storage.local`
 - Adds native muted words in batches, with a preview, duplicate detection, pause/resume, and per-word results
 - Opens a muted-word draft from text selected in a post, with X's native scope and duration controls
 - Reads, searches, edits, and removes words from the signed-in account's native muted-word list
 - Imports your official X archive into **My Posts** for local date filtering, text search, and JSON / Markdown export
+- Records actively visited X posts, profiles, and search pages after you enable **Browsing History**, with local text search, browsing-date filters, and JSON / Markdown exports
 
 ### Why Mute Instead of Block?
 
@@ -78,6 +79,18 @@ Posts are stored in an independent IndexedDB database on this device. **My Posts
 
 This version imports local files. Online timeline retrieval is being investigated separately; see the [read-only investigation](docs/online-posts-investigation.md) for observed pagination behavior and remaining coverage limits.
 
+### Browsing History
+
+Open **Browsing History** in the Control Center and enable recording. Xpert records supported post details, profile pages, and search pages when they are visible in the active tab. The popup shows recent pages and links to the complete history. Recording starts from pages you visit after enabling it; refresh existing X tabs after installing this version.
+
+Each visit saves its canonical X URL, page type, author or profile handle when available, and browsing timestamp. A post saves the body that X has loaded for that specific post; replies and quoted posts keep their own identities. Profiles save the displayed name and bio, while searches save the query and selected search category. Pages whose content is still loading keep their link and receive text when it becomes available. Only supported X pages participate; timeline impressions, Direct Messages, and other websites remain outside this feature.
+
+Search literal text, titles, authors, and links locally, then filter by page type or inclusive browsing dates in your device's time zone or UTC. Repeated visits appear together with the latest visit and a count. Date filters apply to each visit, so revisiting an older post still appears under the day you opened it. JSON and Markdown exports contain every matching visit across all result pages, including individual timestamps. History exports are separate from **My Posts** and the mute/settings backup.
+
+Recording starts disabled and can be paused at any time. Choose a retention period of 30 days, 90 days (default), or Keep until cleared. The history holds up to 20,000 visits, removing the oldest visits as needed. The history page supports deleting selected results and clearing the full history. Pausing keeps saved visits available for search and export. Local history uses a separate extension IndexedDB database and stays on your device; exported files remain under your control. Incognito pages are excluded.
+
+Saved text represents what was loaded during your visit. Open or expand a post to save more of its text. Media files and previously unrecorded page bodies require their original sources. Xpert reads the current page through its existing X site access; this feature uses the existing permission set.
+
 ## Development and Validation
 
 No build step is required; Chrome can load the repository directly.
@@ -98,6 +111,10 @@ node scripts/check-undo-mute.cjs
 node scripts/check-keywords.cjs
 node scripts/check-posts.cjs
 node scripts/check-posts-ui.cjs
+node scripts/check-history-store.cjs
+node scripts/check-history.cjs
+node scripts/check-history-ui.cjs
+node scripts/check-history-extension.cjs
 ```
 
 Set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `CHROME_PATH` to
@@ -118,6 +135,13 @@ The post checks use synthetic archives and a fresh IndexedDB database. They cove
 ZIP validation, precise post IDs, Unicode text, time-zone boundaries, duplicate
 imports, atomic rollback, cross-tab updates, a 10,000-post library, filtered export
 and restoration, and responsive layouts. UI screenshots use synthetic posts.
+
+The history checks cover active-page capture, SPA navigation, exact post and
+profile attribution, delayed text and emoji, revisits, inclusive browsing dates,
+local exports, concurrent writes, retention, quota failures, and deletion while
+captures are pending. A fresh Chromium profile also loads the complete extension
+against synthetic X pages to verify real Chrome messages and IndexedDB storage.
+The history UI is checked at 48 viewport sizes; screenshots contain synthetic data.
 
 ## Automated Releases
 
