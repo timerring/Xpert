@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Xpert",
   "description": "Manage X mutes and muted words. Search and export your local post archive and browsing history.",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "permissions": [
     "alarms",
     "storage"
@@ -37,7 +37,9 @@
         "https://x.com/settings/*",
         "https://twitter.com/settings/*"
       ],
-      "js": ["src/content/keyword-transaction-main.js"],
+      "js": [
+        "src/content/keyword-transaction-main.js"
+      ],
       "world": "MAIN",
       "run_at": "document_idle"
     },
