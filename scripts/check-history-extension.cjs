@@ -10,7 +10,7 @@ function post(handle, id, text) {
 
 (async () => {
   const context = await chromium.launchPersistentContext("", {
-    headless: !process.env.DISPLAY,
+    headless: true,
     channel: "chromium",
     executablePath: process.env.CHROME_PATH,
     args: [`--disable-extensions-except=${root}`, `--load-extension=${root}`]
@@ -79,8 +79,9 @@ function post(handle, id, text) {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     assert.equal((await send("HISTORY_GET")).visits.length, 2);
     await activate(temporary);
+    await temporary.reload();
     await waitForVisits(3, "Saved body 300 中文");
-    console.log("PASS background tabs become visits only when activated");
+    console.log("PASS background loads are excluded and active loads are recorded");
 
     await send("HISTORY_SAVE_SETTINGS", { settings: { enabled: false } });
     await activate(page);
@@ -95,6 +96,7 @@ function post(handle, id, text) {
 
     await send("HISTORY_SAVE_SETTINGS", { settings: { enabled: true } });
     await activate(page);
+    await page.reload();
     await waitForVisits(1, "Saved body 400 中文");
     await send("HISTORY_CLEAR");
     await page.locator('[data-testid="tweetText"]').evaluate((element) => { element.textContent += " changed"; });

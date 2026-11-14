@@ -36,7 +36,7 @@ jobs:
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/xpert-ci/node_modules/playwright
         run: |
-          xvfb-run -a node scripts/check-history-extension.cjs
+          node scripts/check-history-extension.cjs
           for suite in shortcut-layout undo-mute keywords posts posts-ui history-store history history-ui; do
             node "scripts/check-$suite.cjs"
           done
