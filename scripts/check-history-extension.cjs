@@ -10,7 +10,7 @@ function post(handle, id, text) {
 
 (async () => {
   const context = await chromium.launchPersistentContext("", {
-    headless: true,
+    headless: !process.env.DISPLAY,
     channel: "chromium",
     executablePath: process.env.CHROME_PATH,
     args: [`--disable-extensions-except=${root}`, `--load-extension=${root}`]
@@ -37,13 +37,22 @@ function post(handle, id, text) {
       if (!response?.ok) throw new Error(response?.error || "Extension message failed");
       return response.result;
     }, { type, payload });
+    async function activate(page) {
+      await options.evaluate(async (url) => {
+        const tab = (await chrome.tabs.query({})).find((entry) => entry.url === url);
+        if (!tab) throw new Error(`Test tab was not found: ${url}`);
+        await chrome.tabs.update(tab.id, { active: true });
+      }, page.url());
+      await page.bringToFront();
+      await page.waitForFunction(() => document.visibilityState === "visible");
+    }
     const initial = await send("HISTORY_GET");
     assert.equal(initial.settings.enabled, false);
     assert.equal(initial.visits.length, 0);
     await send("HISTORY_SAVE_SETTINGS", { settings: { enabled: true } });
     const page = await newPage();
     await page.goto("https://x.com/alpha/status/100");
-    await page.bringToFront();
+    await activate(page);
     async function waitForVisits(count, text) {
       const deadline = Date.now() + 12000;
       let result;
@@ -65,16 +74,16 @@ function post(handle, id, text) {
     console.log("PASS SPA navigation uses the current sender URL and preserves separate visits");
 
     const temporary = await newPage();
-    await page.bringToFront();
+    await activate(page);
     await temporary.goto("https://x.com/temporary/status/300");
     await new Promise((resolve) => setTimeout(resolve, 1500));
     assert.equal((await send("HISTORY_GET")).visits.length, 2);
-    await temporary.bringToFront();
+    await activate(temporary);
     await waitForVisits(3, "Saved body 300 中文");
     console.log("PASS background tabs become visits only when activated");
 
     await send("HISTORY_SAVE_SETTINGS", { settings: { enabled: false } });
-    await page.bringToFront();
+    await activate(page);
     await page.goto("https://x.com/paused/status/400");
     await new Promise((resolve) => setTimeout(resolve, 400));
     assert.equal((await send("HISTORY_GET")).visits.length, 3);
@@ -85,7 +94,7 @@ function post(handle, id, text) {
     console.log("PASS pause, clear, and settings persist across extension page reloads");
 
     await send("HISTORY_SAVE_SETTINGS", { settings: { enabled: true } });
-    await page.bringToFront();
+    await activate(page);
     await waitForVisits(1, "Saved body 400 中文");
     await send("HISTORY_CLEAR");
     await page.locator('[data-testid="tweetText"]').evaluate((element) => { element.textContent += " changed"; });
