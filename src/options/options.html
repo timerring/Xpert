@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="options.css">
   <link rel="stylesheet" href="keywords.css">
   <link rel="stylesheet" href="posts.css">
+  <link rel="stylesheet" href="history.css">
 </head>
 <body>
   <div class="shell">
@@ -21,6 +22,7 @@
         <button class="nav-item" data-view="ledger">Mute Ledger</button>
         <button class="nav-item" data-view="keywords">Muted Words</button>
         <button class="nav-item" data-view="posts">My Posts</button>
+        <button class="nav-item" data-view="history">Browsing History</button>
         <button class="nav-item" data-view="settings">Settings</button>
         <button class="nav-item" data-view="backup">Backup & Restore</button>
       </nav>
@@ -33,6 +35,7 @@
           <p class="eyebrow">Current X account</p>
           <select id="viewer-select" aria-label="Current X account"></select>
         </div>
+        <div class="history-viewer"><p class="eyebrow">Saved on this device</p><strong>Browsing History</strong></div>
         <div class="posts-viewer"><p class="eyebrow">Local post archive</p><strong id="posts-toolbar-owner">Choose an archive</strong></div>
         <div class="keyword-viewer"><p class="eyebrow">Connected X account</p><strong id="kw-toolbar-viewer">Connect to X</strong></div>
         <a class="open-x" href="https://x.com/timerringX" target="_blank" rel="noreferrer">Open X ↗</a>
@@ -216,6 +219,37 @@
         </article>
       </section>
 
+      <section class="view" id="view-history" aria-labelledby="history-title">
+        <div class="heading"><div><p class="eyebrow">Find it again</p><h1 id="history-title">Browsing History</h1></div></div>
+        <p class="history-intro">Save posts, profiles, and search pages you open on X. Search the text you saw and find pages by when you visited. Your history stays in this browser.</p>
+        <p id="history-notice" class="history-notice" role="status" aria-live="polite" hidden></p>
+        <article class="panel" aria-labelledby="history-recording-title">
+          <div class="history-section-heading"><div><h2 id="history-recording-title">Record your visits</h2><p id="history-recording-status">Loading recording settings…</p></div><button class="button primary" type="button" id="history-toggle" disabled>Enable recording</button></div>
+          <p class="hint">Recording starts after you enable it and captures pages you open in a visible X tab. Posts save the text loaded on their detail page. Timeline scrolling is outside this recording scope.</p>
+          <div class="history-retention-row"><label for="history-retention">Keep visits for<select id="history-retention"><option value="30">30 days</option><option value="90" selected>90 days</option><option value="0">Until I clear them</option></select></label><button class="button ghost" type="button" id="history-save-retention" disabled>Apply retention</button></div>
+          <p class="hint">Applying a retention period removes older visits. History keeps up to 20,000 visits; the oldest visits are removed when the limit is reached. Export a copy to keep them longer.</p>
+        </article>
+        <article class="panel" aria-labelledby="history-library-title">
+          <div class="history-section-heading"><div><h2 id="history-library-title">Your visits</h2><p id="history-library-summary">Loading local history…</p></div><button class="button ghost" type="button" id="history-refresh" disabled>Refresh history</button></div>
+          <div class="history-filter-grid">
+            <label class="history-search-label" for="history-search">Search saved text<input id="history-search" type="search" placeholder="Word or exact phrase" autocomplete="off"></label>
+            <label for="history-author">Author or profile<input id="history-author" type="search" placeholder="@handle" autocomplete="off"></label>
+            <label for="history-type">Page type<select id="history-type"><option value="all">All pages</option><option value="post">Posts</option><option value="profile">Profiles</option><option value="search">Search pages</option></select></label>
+            <label for="history-start">Visited from<input id="history-start" type="date"></label>
+            <label for="history-end">Visited through<input id="history-end" type="date"></label>
+            <label for="history-timezone">Time zone<select id="history-timezone"><option value="local">Device time zone</option><option value="utc">UTC</option></select></label>
+          </div>
+          <p class="hint" id="history-timezone-hint"></p>
+          <p id="history-filter-error" class="history-notice history-error" role="status" hidden></p>
+          <div class="history-result-tools"><p id="history-result-count" aria-live="polite">0 matching pages</p><div class="history-actions"><button class="button ghost" type="button" id="history-reset-filters">Reset filters</button><button class="button primary" type="button" id="history-export-json" disabled>Export JSON</button><button class="button ghost" type="button" id="history-export-markdown" disabled>Export Markdown</button></div></div>
+          <p class="hint history-export-hint">Dates and counts describe visits within your filters. Exports include every matching visit across all pages, including repeat visits. Downloaded files stay under your control.</p>
+          <div id="history-results" class="history-empty">Loading local history…</div>
+          <div class="history-pagination"><button class="button ghost" type="button" id="history-prev" disabled>Previous</button><span id="history-page-label">Page 1 of 1</span><button class="button ghost" type="button" id="history-next" disabled>Next</button></div>
+          <section id="history-delete-review" class="history-review" aria-labelledby="history-delete-title" hidden><h3 id="history-delete-title">Remove this page from history?</h3><p id="history-delete-summary"></p><div class="history-actions"><button class="button ghost" type="button" id="history-delete-cancel">Keep page</button><button class="button danger-button" type="button" id="history-delete-confirm">Remove page</button></div></section>
+        </article>
+        <article class="panel history-library-actions"><div><h2>Clear browsing history</h2><p>Remove all saved visits from this browser. Your posts, mute records, and downloaded exports stay available.</p></div><button class="button danger-button" type="button" id="history-clear" disabled>Clear history</button><section id="history-clear-review" class="history-review" aria-labelledby="history-clear-title" hidden><h3 id="history-clear-title">Clear all saved visits?</h3><p id="history-clear-summary"></p><div class="history-actions"><button class="button ghost" type="button" id="history-clear-cancel">Keep history</button><button class="button danger-button" type="button" id="history-clear-confirm">Clear local history</button></div></section></article>
+      </section>
+
       <section class="view" id="view-settings">
         <div class="heading">
           <div><p class="eyebrow">Preferences</p><h1>Settings</h1></div>
@@ -249,7 +283,7 @@
         </div>
         <div class="backup-grid">
           <article class="panel">
-            <h2>Export Mute &amp; Settings Backup</h2><p>Includes mute ledgers, settings, account queue, and run history. Export your saved posts separately in My Posts.</p>
+            <h2>Export Mute &amp; Settings Backup</h2><p>Includes mute ledgers, settings, account queue, and run history. Export saved posts in My Posts and visited pages in Browsing History.</p>
             <button id="export-data" class="button primary">Download JSON Backup</button>
           </article>
           <article class="panel">
@@ -282,5 +316,7 @@
   <script src="../shared/archive-reader.js"></script>
   <script src="../shared/post-store.js"></script>
   <script src="posts.js"></script>
+  <script src="../shared/history.js"></script>
+  <script src="history.js"></script>
 </body>
 </html>

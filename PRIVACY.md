@@ -1,8 +1,8 @@
 # Xpert Privacy Policy
 
-**Effective date:** November 7, 2026
+**Effective date:** November 14, 2026
 
-Xpert is a Chrome extension that adds controls for muting accounts and words on X and a local library of the user's own posts. This Privacy Policy explains what data Xpert handles, why it is needed, where it is stored, and the choices available to users.
+Xpert is a Chrome extension that adds controls for muting accounts and words on X, a local library of the user's own posts, and optional local X browsing history. This Privacy Policy explains what data Xpert handles, why it is needed, where it is stored, and the choices available to users.
 
 Xpert is an independent project and is not affiliated with, endorsed by, or sponsored by X Corp.
 
@@ -17,6 +17,7 @@ Xpert handles only the data needed to provide its user-facing muting and local r
 - **Extension settings and user-provided data:** button-placement preferences, queue delay settings, and X handles or X links entered or imported by the user.
 - **Muted words:** words or phrases entered by the user, text explicitly selected within a post for a muted-word draft, the native muted-word list returned by X, scope and duration choices, and local batch progress. Selected text is processed locally until the user chooses to add the word on X.
 - **Imported post archives:** account identifiers and profile labels, post identifiers, full text, timestamps, post types, reply and quote references, media links, and import reports from files explicitly selected by the user in **My Posts**. The importer reads supported account and post data files. Other archive sections, including Direct Messages and address books, are excluded from the post library.
+- **Optional X browsing history:** after the user enables recording, supported X post, profile, and search pages visited in a visible active tab; canonical page URLs, titles, authors or profile handles, visit timestamps, loaded post text, profile bios, and search queries. The feature captures the opened page. Timeline impressions, Direct Messages, incognito pages, and other websites are excluded. Recording starts disabled.
 
 My Posts stores user-selected post text locally, which may contain personal information included in those posts. The importer excludes Direct Messages, address books, and location metadata.
 
@@ -34,6 +35,8 @@ Xpert uses this data only to:
 
 **My Posts** uses locally imported post data to provide date and type filters, literal text search, and JSON / Markdown exports. These operations run on the user's device.
 
+**Browsing History** uses recorded visits for local text search, author and page-type filters, browsing-date filters, recent-page shortcuts, and JSON / Markdown exports. Visit timestamps remain separate from post publication dates. All of these operations run on the user's device.
+
 Xpert does not use data for advertising, profiling, creditworthiness, lending, or purposes unrelated to its single purpose.
 
 ## Storage and Retention
@@ -47,6 +50,8 @@ The developer does not operate a server that receives or stores this extension d
 When the user downloads a JSON backup, the file is created locally and is controlled by the user. Xpert does not upload backup files to the developer.
 
 **My Posts** stores its account, posts, and recent import reports in a separate IndexedDB database on the device. **Clear local post library** removes this database's records. Its JSON / Markdown exports are generated locally; the account-ledger backup remains separate. Original image and video files stay in the user's downloaded X archive, while My Posts stores media links. Clearing extension data or uninstalling the extension removes the local post library; downloaded export files remain under the user's control.
+
+**Browsing History** stores visits and recording preferences in a separate extension IndexedDB database on the device. A content-free change notification in `chrome.storage.local` keeps open Xpert views and recording preferences up to date; local storage errors are also recorded there for display. The default retention is 90 days, with options for 30 days or keeping visits until cleared; a 20,000-visit limit removes the oldest entries as needed. Retention cleanup runs daily while Chrome is running and when history is used. Users can pause recording, remove selected results, clear the full history, and download matching visits as JSON or Markdown. These exports are separate from the post-library and mute/settings backups. Clearing extension data or uninstalling removes locally saved history, while exported files remain under the user's control.
 
 ## Data Transmission and Sharing
 
@@ -69,8 +74,9 @@ My Posts imports, filters, searches, and exports local files on the device. Open
 Xpert uses the following Chrome permissions:
 
 - **`storage`:** stores settings, user-provided account handles, account and word batch progress, run history, and the mute ledger locally.
-- **`alarms`:** schedules the next item in user-started account and word batches.
+- **`alarms`:** schedules the next item in user-started account and word batches and daily browsing-history retention cleanup.
 - **Host access to `x.com` and `twitter.com`:** places Mute controls on supported X pages, reads explicitly selected post text, identifies the relevant X account, and performs account actions and native muted-word operations requested by the user.
+- The same X site access records supported pages and loaded text when **Browsing History** is enabled. Browser-wide history access is outside Xpert's permission set.
 
 Xpert ships its own scripts with the extension. On X settings pages, a limited helper uses X's already-loaded request-metadata function to prepare identifiers for the four native muted-word operations. This helper returns only the request identifier; the isolated extension script performs account checks and the requested operation. The helper's messages contain the fixed endpoint, HTTP method, and a correlation identifier. Words, account identifiers, and session credentials stay out of these helper messages.
 
@@ -83,6 +89,7 @@ Users can:
 - stop bulk queue processing and clear completed queue items;
 - review words before adding them, pause or resume a word batch, edit or remove native rules, and clear local word batch results;
 - export a local JSON backup;
+- enable or pause X browsing-history recording, choose its retention, export matching visits, and delete saved visits;
 - clear the local mute ledger;
 - reset extension settings;
 - clear all extension storage through Chrome; or

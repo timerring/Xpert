@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="popup.css">
   <title>Xpert</title>
 </head>
@@ -12,9 +13,14 @@
     <div><strong id="pending">0</strong><span>Queued</span></div>
   </div>
   <button id="open-options">Open Control Center</button>
-  <p>Manage mutes, native muted words, and your local post archive.</p>
+  <section class="recent-history" aria-labelledby="recent-history-title">
+    <div class="recent-history-heading"><h2 id="recent-history-title">Recently visited</h2><span id="recent-history-status">Loading…</span></div>
+    <div id="recent-history-list" class="recent-history-empty">Loading local history…</div>
+    <button id="open-history" class="secondary">Open Browsing History</button>
+  </section>
   <script src="../shared/core.js"></script>
   <script src="../shared/storage.js"></script>
+  <script src="../shared/history.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

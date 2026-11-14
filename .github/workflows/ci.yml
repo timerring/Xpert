@@ -36,7 +36,7 @@ jobs:
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/xpert-ci/node_modules/playwright
         run: |
-          for suite in shortcut-layout undo-mute keywords posts posts-ui; do
+          for suite in shortcut-layout undo-mute keywords posts posts-ui history-store history history-ui history-extension; do
             node "scripts/check-$suite.cjs"
           done
       - name: Validate package

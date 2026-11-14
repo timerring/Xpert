@@ -273,3 +273,4 @@ async function sendMessageWithRetry(tabId, message) {
 }
 
 importScripts("shared/keywords.js", "keywords-background.js");
+importScripts("shared/history.js", "shared/history-store.js", "history-background.js");
