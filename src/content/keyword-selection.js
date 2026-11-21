@@ -53,20 +53,27 @@
     const shadow = host.attachShadow({ mode: "open" });
     shadow.innerHTML = `<style>
       :host([hidden]) { display: none !important; }
-      .toolbar { position: absolute; display: flex; gap: 6px; width: max-content; max-width: calc(100% - 16px); pointer-events: auto; }
+      .toolbar { position: absolute; display: flex; align-items: center; width: max-content;
+        max-width: calc(100% - 16px); box-sizing: border-box; padding: 3px;
+        pointer-events: auto; border: 1px solid #e1e5e8; border-radius: 10px;
+        background: #fff; box-shadow: 0 3px 12px #0002; }
       button { box-sizing: border-box; min-width: 0; flex: 1 1 auto; max-width: 100%;
-        pointer-events: auto; border: 1px solid #9fb5c3; border-radius: 999px;
-        background: #fff; color: #0f1419; box-shadow: 0 3px 14px #0003;
+        border: 0; border-radius: 6px; background: transparent; color: #0f1419;
         font: 600 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        padding: 7px 13px; cursor: pointer; overflow-wrap: anywhere; }
-      button:hover { background: #f2efff; }
-      button:focus-visible { outline: 2px solid #7856ff; outline-offset: 2px; }
+        padding: 5px 10px; cursor: pointer; overflow-wrap: anywhere; }
+      button[hidden] { display: none; }
+      .divider { width: 1px; height: 16px; flex: 0 0 1px; background: #dce1e5; margin: 0 3px; }
+      button[hidden] + .divider { display: none; }
+      button:hover { background: #f1f3f5; }
+      button:focus-visible { outline: 2px solid #7856ff; outline-offset: -2px; }
       button:disabled { cursor: progress; opacity: .7; }
       @media (prefers-color-scheme: dark) {
-        button { background: #15202b; color: #f7f9f9; border-color: #536471; }
+        .toolbar { background: #15202b; border-color: #536471; }
+        button { color: #f7f9f9; }
+        .divider { background: #536471; }
         button:hover { background: #29334a; }
       }
-    </style><div class="toolbar" role="group" aria-label="Selected text actions"><button type="button" aria-label="Mute selected word on X">Mute word</button><button type="button" data-action="ask-grok" aria-label="Ask Grok about selected text">Ask Grok</button></div>`;
+    </style><div class="toolbar" role="group" aria-label="Selected text actions"><button type="button" aria-label="Mute selected word on X">Mute word</button><span class="divider" aria-hidden="true"></span><button type="button" data-action="ask-grok" aria-label="Ask Grok about selected text">Ask Grok</button></div>`;
     toolbar = shadow.querySelector(".toolbar");
     button = shadow.querySelector("button");
     grokButton = shadow.querySelector('[data-action="ask-grok"]');
@@ -114,10 +121,10 @@
       return;
     }
     const x = Math.min(viewport.right - bounds.width - margin,
-      Math.max(viewport.left + margin, rect.left + (rect.width - bounds.width) / 2));
-    const preferredY = rect.bottom + margin;
+      Math.max(viewport.left + margin, rect.right - bounds.width));
+    const preferredY = rect.top - bounds.height - margin;
     const y = Math.max(viewport.top + margin, Math.min(viewport.bottom - bounds.height - margin,
-      preferredY + bounds.height + margin <= viewport.bottom ? preferredY : rect.top - bounds.height - margin));
+      preferredY >= viewport.top + margin ? preferredY : rect.bottom + margin));
     toolbar.style.left = `${(x - viewport.left) / (scale * controlScale)}px`;
     toolbar.style.top = `${(y - viewport.top) / (scale * controlScale)}px`;
     pending = selection;

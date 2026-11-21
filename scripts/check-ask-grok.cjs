@@ -47,6 +47,25 @@ const root = path.resolve(__dirname, '..');
     await ask.click();
     assert.equal(await page.locator('#body [role="textbox"]').innerText(),'Editable 😀');
     console.log('PASS contenteditable Grok composer receives plain text');
+    await page.evaluate(()=>{document.querySelector('article').style.marginTop='150px';selectText('Selected phrase for Grok with enough space for both actions');});
+    await ask.waitFor();
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const geometry=await page.evaluate(()=>{
+      const shadow=document.querySelector('.xm-keyword-selection').shadowRoot;
+      const bar=shadow.querySelector('.toolbar');
+      const selected=getSelection().getRangeAt(0).getBoundingClientRect();
+      const bounds=bar.getBoundingClientRect();
+      return {top:bounds.top,bottom:bounds.bottom,right:bounds.right,selectedTop:selected.top,selectedRight:selected.right,
+        divider:getComputedStyle(shadow.querySelector('.divider')).display,
+        buttonBorder:getComputedStyle(shadow.querySelector('button')).borderTopWidth};
+    });
+    assert.ok(geometry.bottom<geometry.selectedTop);
+    assert.ok(Math.abs(geometry.right-geometry.selectedRight)<1);
+    assert.equal(geometry.buttonBorder,'0px');
+    assert.notEqual(geometry.divider,'none');
+    if(process.env.GROK_SCREENSHOT) await page.screenshot({path:process.env.GROK_SCREENSHOT});
+    console.log('PASS one divided toolbar anchors above the right edge of the selection');
+    await page.evaluate(()=>document.querySelector('article').style.marginTop='0');
     let layouts=0;
     for(const width of [320,390,768,1024,1440,1920]) for(const zoom of [0.8,1,1.5,2]) {
       await page.setViewportSize({width,height:600});
