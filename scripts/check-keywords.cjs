@@ -249,7 +249,7 @@ async function selectionFixture(browser, { viewport = { width: 1440, height: 900
   await page.addScriptTag({ content: read("src/shared/core.js") });
   await page.addScriptTag({ content: read("src/content/keyword-selection.js") });
   const select = (start, startOffset = 0, end = start, endOffset) => page.evaluate(({ start, startOffset, end, endOffset }) => testSelect(start, startOffset, end, endOffset), { start, startOffset, end, endOffset });
-  return { page, select, button: page.locator(".xm-keyword-selection button"), close: async () => { assert.deepEqual(errors, []); await context.close(); } };
+  return { page, select, button: page.locator(".xm-keyword-selection button").first(), close: async () => { assert.deepEqual(errors, []); await context.close(); } };
 }
 
 async function check(label, action) {
