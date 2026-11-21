@@ -52,6 +52,7 @@ const root = path.resolve(__dirname, '..');
       await page.setViewportSize({width,height:600});
       await page.evaluate(z=>{document.documentElement.style.zoom=z;selectText('layout phrase');},zoom);
       await ask.waitFor();
+      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
       const bounds=await ask.boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width+1);
       await ask.click({trial:true});layouts++;
     }
