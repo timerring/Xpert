@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/timerring/Xpert/compare/v0.3.0...v0.4.0) (2026-11-21)
+
+
+### Features
+
+* add Ask Grok to selected post text ([#18](https://github.com/timerring/Xpert/issues/18)) ([e328f96](https://github.com/timerring/Xpert/commit/e328f96eaffacfd4c112a20d51795a574b804a30))
+
 ## [0.3.0](https://github.com/timerring/Xpert/compare/v0.2.6...v0.3.0) (2026-11-14)
 
 
