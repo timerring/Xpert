@@ -53,6 +53,8 @@ X request failures keep the ledger entry available for retry. Local record failu
 
 ### Native Muted Words
 
+Select text in a post to see **Mute word** and **Ask Grok**. **Ask Grok** opens X's lower-right Grok drawer and adds the selection to its draft, appending to an existing draft for follow-up questions. Review or extend the draft and send it with Grok's own controls. Grok accepts selections up to 10,000 characters, while Mute word appears for phrases within X's 140-character limit. The drawer must be available for your X account and window layout.
+
 Open **Muted Words** in the Control Center and connect to your signed-in X account. Paste one word or phrase per line, select **Preview words**, and review the terms and target account before choosing **Apply**. Each batch accepts up to 100 unique phrases of up to 140 Unicode characters each. Spaces inside phrases, Chinese text, hashtags, mentions, and emoji are preserved. Every word is checked against the current X list before adding it. Matching existing words are skipped, keeping their original settings.
 
 Choose Home timeline, notifications, or both. The notification audience can be everyone or people you do not follow. Durations match X: forever, 24 hours, 7 days, or 30 days. When editing an existing word, **Keep current expiry** preserves its current expiry time. X applies these rules to the account; search results can still contain the words. See [X's native muted-word documentation](https://help.x.com/en/using-x/advanced-x-mute-options).

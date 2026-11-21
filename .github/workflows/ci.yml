@@ -37,7 +37,7 @@ jobs:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/xpert-ci/node_modules/playwright
         run: |
           node scripts/check-history-extension.cjs
-          for suite in shortcut-layout undo-mute keywords posts posts-ui history-store history history-ui; do
+          for suite in shortcut-layout undo-mute keywords ask-grok posts posts-ui history-store history history-ui; do
             node "scripts/check-$suite.cjs"
           done
       - name: Validate package

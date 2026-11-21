@@ -4,6 +4,8 @@
   const Core = globalThis.XMuteCore;
   let host;
   let button;
+  let grokButton;
+  let toolbar;
   let frame;
   let pending;
   let dismissed;
@@ -24,8 +26,8 @@
     if (start.isContentEditable || end.isContentEditable ||
         start.closest('input, textarea, select, [role="textbox"]') ||
         end.closest('input, textarea, select, [role="textbox"]')) return null;
-    const text = selection.toString().trim().replace(/\s*[\r\n\u2028\u2029]+\s*/g, " ");
-    if (!text || Array.from(text).length > 140 || /[\u0000-\u001f\u007f]/u.test(text)) return null;
+    const text = selection.toString().trim();
+    if (!text || Array.from(text).length > 10000 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(text)) return null;
     const profile = document.querySelector('a[data-testid="AppTabBar_Profile_Link"][href^="/"]');
     const viewer = Core.normalizeHandle(profile?.getAttribute("href").slice(1) || "");
     if (!viewer) return null;
@@ -51,7 +53,8 @@
     const shadow = host.attachShadow({ mode: "open" });
     shadow.innerHTML = `<style>
       :host([hidden]) { display: none !important; }
-      button { position: absolute; box-sizing: border-box; width: max-content; max-width: calc(100% - 16px);
+      .toolbar { position: absolute; display: flex; gap: 6px; width: max-content; max-width: calc(100% - 16px); pointer-events: auto; }
+      button { box-sizing: border-box; min-width: 0; flex: 1 1 auto; max-width: 100%;
         pointer-events: auto; border: 1px solid #9fb5c3; border-radius: 999px;
         background: #fff; color: #0f1419; box-shadow: 0 3px 14px #0003;
         font: 600 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -63,10 +66,13 @@
         button { background: #15202b; color: #f7f9f9; border-color: #536471; }
         button:hover { background: #29334a; }
       }
-    </style><button type="button" aria-label="Mute selected word on X">Mute word</button>`;
+    </style><div class="toolbar" role="group" aria-label="Selected text actions"><button type="button" aria-label="Mute selected word on X">Mute word</button><button type="button" data-action="ask-grok" aria-label="Ask Grok about selected text">Ask Grok</button></div>`;
+    toolbar = shadow.querySelector(".toolbar");
     button = shadow.querySelector("button");
+    grokButton = shadow.querySelector('[data-action="ask-grok"]');
+    grokButton.addEventListener("click", openGrok);
     // Preserve the user's selection while the control receives a pointer click.
-    button.addEventListener("pointerdown", (event) => event.preventDefault());
+    toolbar.addEventListener("pointerdown", (event) => event.preventDefault());
     button.addEventListener("click", openKeywords);
     document.documentElement.append(host);
   }
@@ -88,12 +94,20 @@
     }
     if (!host) createControl();
     host.hidden = false;
+    const muteText = selection.text.replace(/\s*[\r\n\u2028\u2029]+\s*/g, " ");
+    button.hidden = Array.from(muteText).length > 140;
+    grokButton.textContent = "Ask Grok";
+    grokButton.setAttribute("aria-label", "Ask Grok about selected text");
+    grokButton.title = "Add selected text to your Grok draft";
     button.textContent = "Mute word";
     button.setAttribute("aria-label", "Mute selected word on X");
     button.title = "Review this phrase and choose where and how long to mute it on X";
     const viewport = host.getBoundingClientRect();
     const scale = viewport.width / host.offsetWidth || 1;
-    const bounds = button.getBoundingClientRect();
+    const controlScale = Math.min(1, host.offsetWidth / 240, host.offsetHeight / 80);
+    toolbar.style.zoom = String(controlScale);
+    toolbar.style.maxWidth = `${Math.max(1, host.offsetWidth - 16) / controlScale}px`;
+    const bounds = toolbar.getBoundingClientRect();
     const margin = 8 * scale;
     if (bounds.width + 2 * margin > viewport.width || bounds.height + 2 * margin > viewport.height) {
       hide();
@@ -104,8 +118,8 @@
     const preferredY = rect.bottom + margin;
     const y = Math.max(viewport.top + margin, Math.min(viewport.bottom - bounds.height - margin,
       preferredY + bounds.height + margin <= viewport.bottom ? preferredY : rect.top - bounds.height - margin));
-    button.style.left = `${(x - viewport.left) / scale}px`;
-    button.style.top = `${(y - viewport.top) / scale}px`;
+    toolbar.style.left = `${(x - viewport.left) / (scale * controlScale)}px`;
+    toolbar.style.top = `${(y - viewport.top) / (scale * controlScale)}px`;
     pending = selection;
   }
 
@@ -126,7 +140,7 @@
     button.disabled = true;
     try {
       const response = await chrome.runtime.sendMessage({
-        type: "OPEN_KEYWORDS", text: selected.text, viewer: selected.viewer
+        type: "OPEN_KEYWORDS", text: selected.text.replace(/\s*[\r\n\u2028\u2029]+\s*/g, " "), viewer: selected.viewer
       });
       if (!response?.ok) throw new Error(response?.error || "Open Xpert again to review the selected phrase");
       dismissed = selected;
@@ -138,6 +152,28 @@
     } finally {
       opening = false;
       button.disabled = false;
+    }
+  }
+
+  async function openGrok(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (opening || !pending) return;
+    const selected = readSelection();
+    if (!sameSelection(selected, pending)) return hide();
+    opening = true;
+    grokButton.disabled = true;
+    try {
+      await globalThis.XpertGrokDraft.open(selected.text, selected.path);
+      dismissed = selected;
+      hide();
+    } catch (error) {
+      grokButton.textContent = "Try Ask Grok again";
+      grokButton.title = error.message;
+      grokButton.setAttribute("aria-label", error.message);
+    } finally {
+      opening = false;
+      grokButton.disabled = false;
     }
   }
 

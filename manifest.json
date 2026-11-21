@@ -58,6 +58,7 @@
         "src/content/content.js",
         "src/content/keyword-transaction.js",
         "src/content/keywords-api.js",
+        "src/content/grok-draft.js",
         "src/content/keyword-selection.js",
         "src/shared/history.js",
         "src/content/history.js"

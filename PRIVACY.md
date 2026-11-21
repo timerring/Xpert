@@ -55,6 +55,8 @@ When the user downloads a JSON backup, the file is created locally and is contro
 
 ## Data Transmission and Sharing
 
+**Ask Grok** adds text explicitly selected within a post to the native X Grok drawer when the user clicks the action. Existing draft text is preserved and the selection is appended locally in the input. The user sends the draft using Grok's own controls. X and Grok govern data handling in their interface.
+
 When the user requests a mute or unmute action, Xpert sends the required account identifier and X session authentication information directly to `https://x.com` over HTTPS. This transmission is necessary for X to perform the requested action and is governed by X's own terms and privacy practices.
 
 When the user connects to or manages muted words, Xpert communicates directly with X using the current signed-in session. Requested additions send the chosen words, scope, and duration; edits and removals send native word identifiers and the requested changes. These requests go to X over HTTPS. The developer receives none of this data.
