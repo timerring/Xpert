@@ -51,6 +51,7 @@
     // A fixed measuring surface keeps coordinates correct when X applies CSS zoom.
     host.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483647;";
     const shadow = host.attachShadow({ mode: "open" });
+    // Native SVG paths from X’s Mute menu item and Grok drawer launcher (2026-11-22).
     shadow.innerHTML = `<style>
       :host([hidden]) { display: none !important; }
       .toolbar { position: absolute; display: flex; align-items: center; width: max-content;
@@ -80,7 +81,7 @@
         .divider { background: #536471; }
         button:hover { background: #29334a; }
       }
-    </style><div class="toolbar" role="group" aria-label="Selected text actions"><button type="button" aria-label="Mute selected word on X"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9H2v6h4l5 4V5L7 8M16 9l5 6m0-6-5 6M3 3l18 18"/></svg><span class="tooltip" aria-hidden="true">Mute word</span></button><span class="divider" aria-hidden="true"></span><button type="button" data-action="ask-grok" aria-label="Ask Grok about selected text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 6.5A9 9 0 0 1 6.5 19.5M4.5 17.5A9 9 0 0 1 17.5 4.5M3 21 21 3M14 4h6v6"/></svg><span class="tooltip" aria-hidden="true">Ask Grok</span></button></div>`;
+    </style><div class="toolbar" role="group" aria-label="Selected text actions"><button type="button" aria-label="Mute selected word on X"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><g><path d="M16 22h-2.35l-.275-.219-3.842-3.073 1.424-1.424L14 19.72v-5.477l2-2V22z"/><path clip-rule="evenodd" d="M16 6.586l4.293-4.293 1.414 1.414-18 18-1.414-1.414 2.657-2.658C3.795 17.063 3 15.875 3 14.5v-5C3 7.567 4.567 6 6.5 6h2.148l4.727-3.781.274-.219H16v4.586zM9.625 7.78L9.351 8H6.5C5.672 8 5 8.672 5 9.5v5c0 .828.672 1.5 1.5 1.5h.086L14 8.586V4.28l-4.375 3.5z" fill-rule="evenodd"/></g></svg><span class="tooltip" aria-hidden="true">Mute word</span></button><span class="divider" aria-hidden="true"></span><button type="button" data-action="ask-grok" aria-label="Ask Grok about selected text"><svg viewBox="0 0 33 32" fill="currentColor" aria-hidden="true"><g><path d="M12.745 20.54l10.97-8.19c.539-.4 1.307-.244 1.564.38 1.349 3.288.746 7.241-1.938 9.955-2.683 2.714-6.417 3.31-9.83 1.954l-3.728 1.745c5.347 3.697 11.84 2.782 15.898-1.324 3.219-3.255 4.216-7.692 3.284-11.693l.008.009c-1.351-5.878.332-8.227 3.782-13.031L33 0l-4.54 4.59v-.014L12.743 20.544m-2.263 1.987c-3.837-3.707-3.175-9.446.1-12.755 2.42-2.449 6.388-3.448 9.852-1.979l3.72-1.737c-.67-.49-1.53-1.017-2.515-1.387-4.455-1.854-9.789-.931-13.41 2.728-3.483 3.523-4.579 8.94-2.697 13.561 1.405 3.454-.899 5.898-3.22 8.364C1.49 30.2.666 31.074 0 32l10.478-9.466"/></g></svg><span class="tooltip" aria-hidden="true">Ask Grok</span></button></div>`;
     toolbar = shadow.querySelector(".toolbar");
     button = shadow.querySelector("button");
     grokButton = shadow.querySelector('[data-action="ask-grok"]');

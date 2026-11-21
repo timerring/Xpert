@@ -168,7 +168,7 @@ X is a continuously changing single-page application. The extension prefers rela
 
 Native word requests also require X's current client transaction metadata. A bundled script on X settings pages calls the already-loaded, cached X metadata adapter for four fixed keyword endpoints. It returns only a request identifier to the isolated content script. Account checks, credentials, fixed request URLs, and all batch logic remain in the isolated script and service worker. The adapter uses X's internal module interface; a change to that interface pauses processing with an update/refresh message. Xpert bundles its own code and adds no remote script loader or code evaluator.
 
-This project independently implements publicly described product behavior. It does not contain third-party extension source code, names, icons, or other branded assets.
+This project independently implements publicly described product behavior. The selection toolbar uses the native X Mute and Grok icon paths to identify those platform actions.
 
 [^why-mute]: This extension uses Mute because it removes unwanted posts from the timeline without unfollowing the account or disrupting an existing social connection. Block remains the stronger option for safety, harassment, or firm contact boundaries.
 [^x-sources]: Sources: X Help Center — [How to mute accounts on X](https://help.x.com/en/using-x/x-mute) and [Blocking on X](https://help.x.com/en/using-x/blocking-and-unblocking-accounts).
