@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Xpert",
   "description": "Manage X mutes and muted words. Search and export your local post archive and browsing history.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "permissions": [
     "alarms",
     "storage"
