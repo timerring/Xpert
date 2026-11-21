@@ -57,11 +57,18 @@
         max-width: calc(100% - 16px); box-sizing: border-box; padding: 3px;
         pointer-events: auto; border: 1px solid #e1e5e8; border-radius: 10px;
         background: #fff; box-shadow: 0 3px 12px #0002; }
-      button { box-sizing: border-box; min-width: 0; flex: 1 1 auto; max-width: 100%;
+      button { display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 0; flex: 0 0 32px; width: 32px; height: 32px; max-width: 100%;
         border: 0; border-radius: 6px; background: transparent; color: #0f1419;
         font: 600 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        padding: 5px 10px; cursor: pointer; overflow-wrap: anywhere; }
+        padding: 6px; cursor: pointer; }
       button[hidden] { display: none; }
+      svg { width: 19px; height: 19px; flex-shrink: 0; }
+      .tooltip { display: none; position: absolute; top: calc(100% + 7px); right: 0;
+        box-sizing: border-box; width: max-content; max-width: min(260px, calc(100vw - 16px));
+        padding: 5px 8px; border-radius: 5px; background: #0f1419; color: #fff;
+        font: 500 12px/18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        text-align: left; overflow-wrap: anywhere; pointer-events: none; }
+      button:hover .tooltip, button:focus-visible .tooltip { display: block; }
       .divider { width: 1px; height: 16px; flex: 0 0 1px; background: #dce1e5; margin: 0 3px; }
       button[hidden] + .divider { display: none; }
       button:hover { background: #f1f3f5; }
@@ -73,7 +80,7 @@
         .divider { background: #536471; }
         button:hover { background: #29334a; }
       }
-    </style><div class="toolbar" role="group" aria-label="Selected text actions"><button type="button" aria-label="Mute selected word on X">Mute word</button><span class="divider" aria-hidden="true"></span><button type="button" data-action="ask-grok" aria-label="Ask Grok about selected text">Ask Grok</button></div>`;
+    </style><div class="toolbar" role="group" aria-label="Selected text actions"><button type="button" aria-label="Mute selected word on X"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9H2v6h4l5 4V5L7 8M16 9l5 6m0-6-5 6M3 3l18 18"/></svg><span class="tooltip" aria-hidden="true">Mute word</span></button><span class="divider" aria-hidden="true"></span><button type="button" data-action="ask-grok" aria-label="Ask Grok about selected text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 6.5A9 9 0 0 1 6.5 19.5M4.5 17.5A9 9 0 0 1 17.5 4.5M3 21 21 3M14 4h6v6"/></svg><span class="tooltip" aria-hidden="true">Ask Grok</span></button></div>`;
     toolbar = shadow.querySelector(".toolbar");
     button = shadow.querySelector("button");
     grokButton = shadow.querySelector('[data-action="ask-grok"]');
@@ -103,15 +110,15 @@
     host.hidden = false;
     const muteText = selection.text.replace(/\s*[\r\n\u2028\u2029]+\s*/g, " ");
     button.hidden = Array.from(muteText).length > 140;
-    grokButton.textContent = "Ask Grok";
+    grokButton.querySelector(".tooltip").textContent = "Ask Grok";
     grokButton.setAttribute("aria-label", "Ask Grok about selected text");
-    grokButton.title = "Add selected text to your Grok draft";
-    button.textContent = "Mute word";
+    grokButton.removeAttribute("title");
+    button.querySelector(".tooltip").textContent = "Mute word";
     button.setAttribute("aria-label", "Mute selected word on X");
-    button.title = "Review this phrase and choose where and how long to mute it on X";
+    button.removeAttribute("title");
     const viewport = host.getBoundingClientRect();
     const scale = viewport.width / host.offsetWidth || 1;
-    const controlScale = Math.min(1, host.offsetWidth / 240, host.offsetHeight / 80);
+    const controlScale = Math.min(1, host.offsetWidth / 100, host.offsetHeight / 80);
     toolbar.style.zoom = String(controlScale);
     toolbar.style.maxWidth = `${Math.max(1, host.offsetWidth - 16) / controlScale}px`;
     const bounds = toolbar.getBoundingClientRect();
@@ -153,7 +160,7 @@
       dismissed = selected;
       hide();
     } catch (error) {
-      button.textContent = "Try again";
+      button.querySelector(".tooltip").textContent = "Try again";
       button.title = error.message;
       button.setAttribute("aria-label", `Try again: ${error.message}`);
     } finally {
@@ -175,7 +182,7 @@
       dismissed = selected;
       hide();
     } catch (error) {
-      grokButton.textContent = "Try Ask Grok again";
+      grokButton.querySelector(".tooltip").textContent = "Try Ask Grok again";
       grokButton.title = error.message;
       grokButton.setAttribute("aria-label", error.message);
     } finally {
